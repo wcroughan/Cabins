@@ -14,7 +14,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   autoUpdate: 1
   numNoiseScales: 5
-  baseNoiseScale: -2
+  baseNoiseScale: -3.3
   scaleFalloff: 0.5
   scaleScalingFactor: 2
   heightCurve:
@@ -22,16 +22,16 @@ MonoBehaviour:
     m_Curve:
     - serializedVersion: 3
       time: -0.012499493
-      value: 0.5116199
-      inSlope: 0.25220555
-      outSlope: 0.25220555
+      value: 0.5
+      inSlope: 0
+      outSlope: 0
       tangentMode: 34
       weightedMode: 0
       inWeight: 0
       outWeight: 0.33333334
     - serializedVersion: 3
-      time: 0.27655825
-      value: 0.5845219
+      time: 0.06
+      value: 0.5
       inSlope: 0
       outSlope: 0
       tangentMode: 0
@@ -39,8 +39,8 @@ MonoBehaviour:
       inWeight: 0.33333334
       outWeight: 0.33333334
     - serializedVersion: 3
-      time: 0.7980193
-      value: 0.9928064
+      time: 0.6248382
+      value: 0.99635977
       inSlope: 0
       outSlope: 0
       tangentMode: 0
@@ -50,8 +50,8 @@ MonoBehaviour:
     - serializedVersion: 3
       time: 1
       value: 1
-      inSlope: 0.035615407
-      outSlope: 0.035615407
+      inSlope: 0.009703104
+      outSlope: 0.009703104
       tangentMode: 34
       weightedMode: 0
       inWeight: 0.33333334

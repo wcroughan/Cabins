@@ -9,11 +9,13 @@ public class EndlessTerrain : MonoBehaviour
     [SerializeField]
     GameObject terrainChunkPrefab;
     static GameObject chunkPrefab;
-    const int maxMapViewDistance = 400;
 
     [SerializeField]
     Biome[] biomes;
+    [SerializeField]
+    LODThreshInfo[] detailLevels;
 
+    static int maxMapViewDistance;
 
     const float viewerMoveThreshForChunkUpdate = 25f;
     const float viewerMoveThreshForChunkUpdate_sq = viewerMoveThreshForChunkUpdate * viewerMoveThreshForChunkUpdate;
@@ -32,6 +34,7 @@ public class EndlessTerrain : MonoBehaviour
     // Start is called before the first frame update
     void Start()
     {
+        maxMapViewDistance = detailLevels[detailLevels.Length - 1].distThresh;
         chunkPrefab = terrainChunkPrefab;
         terrainGenerator = FindObjectOfType<TerrainGenerator>();
         chunkSize = TerrainGenerator.mapChunkNumVertices - 1;
@@ -92,7 +95,7 @@ public class EndlessTerrain : MonoBehaviour
                 else
                 {
                     Dictionary<Vector2, Biome> neighborBiomes = GetNeighborBiomesForCoord(chunkCoord);
-                    terrainChunkDictionary.Add(chunkCoord, new TerrainChunkGameObject(chunkCoord, chunkSize, transform, neighborBiomes[Vector2.zero], neighborBiomes));
+                    terrainChunkDictionary.Add(chunkCoord, new TerrainChunkGameObject(chunkCoord, chunkSize, transform, neighborBiomes[Vector2.zero], neighborBiomes, detailLevels));
                 }
             }
         }
@@ -109,13 +112,15 @@ public class EndlessTerrain : MonoBehaviour
 
         MeshRenderer meshRenderer;
         MeshFilter meshFilter;
+        Rigidbody rigidbody;
 
         LODMesh[] lODMeshes;
+        LODThreshInfo[] lODThreshInfos;
         int previousLOD = -1;
         bool heightMapReceived = false;
         TerrainChunkHeightData terrainChunkHeightData;
 
-        public TerrainChunkGameObject(Vector2 coord, int size, Transform parent, Biome biome, Dictionary<Vector2, Biome> neighborBiomes)
+        public TerrainChunkGameObject(Vector2 coord, int size, Transform parent, Biome biome, Dictionary<Vector2, Biome> neighborBiomes, LODThreshInfo[] detailLevels)
         {
             position = coord * size;
             bounds = new Bounds(position, Vector2.one * size);
@@ -125,6 +130,7 @@ public class EndlessTerrain : MonoBehaviour
             meshObject.name = "Chunk " + coord;
             meshRenderer = meshObject.GetComponent<MeshRenderer>();
             meshFilter = meshObject.GetComponent<MeshFilter>();
+            rigidbody = meshObject.GetComponent<Rigidbody>();
             meshObject.transform.position = positionV3;
             meshObject.transform.SetParent(parent, false);
 
@@ -136,6 +142,7 @@ public class EndlessTerrain : MonoBehaviour
             {
                 lODMeshes[i] = new LODMesh(i, UpdateViewable, neighborBiomes);
             }
+            this.lODThreshInfos = detailLevels;
 
             this.biome = biome;
             this.neighborBiomes = neighborBiomes;
@@ -169,6 +176,23 @@ public class EndlessTerrain : MonoBehaviour
             UpdateViewable();
         }
 
+        int GetLODForSqDist(float sqdist)
+        {
+            int lodi = 0;
+            for (int i = 0; i < lODThreshInfos.Length; i++)
+            {
+                if (sqdist > lODThreshInfos[i].distThresh * lODThreshInfos[i].distThresh)
+                {
+                    lodi++;
+                }
+                else
+                {
+                    break;
+                }
+            }
+            return lODThreshInfos[lodi].lod;
+        }
+
         public void UpdateViewable()
         {
             if (!heightMapReceived)
@@ -179,9 +203,8 @@ public class EndlessTerrain : MonoBehaviour
 
             if (viewable)
             {
-                // int lod = Mathf.FloorToInt(Mathf.Sqrt(viewDistance) / maxMapViewDistance * 6.99f);
-                int lod = 0;
-                Debug.LogWarning("LOD is always 0");
+                // int lod = Mathf.FloorToInt();
+                int lod = GetLODForSqDist(viewDistance);
 
                 if (lod != previousLOD)
                 {
@@ -237,5 +260,12 @@ public class EndlessTerrain : MonoBehaviour
             meshRequested = true;
             terrainGenerator.RequestTerrainChunkMeshData(OnMeshDataReceived, terrainChunkHeightData, lod);
         }
+    }
+
+    [System.Serializable]
+    public struct LODThreshInfo
+    {
+        public int lod;
+        public int distThresh;
     }
 }

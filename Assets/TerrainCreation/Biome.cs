@@ -18,10 +18,15 @@ public class Biome : UpdatableTerrainInfo
     [SerializeField]
     public float heightMultiplier = 10f;
     [SerializeField]
-    public Gradient gradient;
+    Gradient gradient;
 
     protected override void OnValidate()
     {
         base.OnValidate();
+    }
+
+    public Color GetColorForHeight(float h)
+    {
+        return gradient.Evaluate(h / heightMultiplier);
     }
 }

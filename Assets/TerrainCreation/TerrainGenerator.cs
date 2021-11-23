@@ -9,7 +9,7 @@ public class TerrainGenerator : MonoBehaviour
     [SerializeField]
     int seed = 0;
     [SerializeField, Min(1)]
-    int crossBiomeSmoothRange = 10;
+    int crossBiomeHeightSmoothRange = 10;
 
     public const int LOD_MIN = 0, LOD_MAX = 6;
 
@@ -18,7 +18,7 @@ public class TerrainGenerator : MonoBehaviour
     private int randomOffsetRange = 100000;
 
     Queue<TerrainCallbackInfo<TerrainChunkMeshData>> terrainChunkMeshCallbackQueue = new Queue<TerrainCallbackInfo<TerrainChunkMeshData>>();
-    Queue<TerrainCallbackInfo<float[,]>> terrainChunkHeightCallbackQueue = new Queue<TerrainCallbackInfo<float[,]>>();
+    Queue<TerrainCallbackInfo<TerrainChunkHeightData>> terrainChunkHeightCallbackQueue = new Queue<TerrainCallbackInfo<TerrainChunkHeightData>>();
 
     //Singleton
     private static TerrainGenerator _instance;
@@ -63,11 +63,15 @@ public class TerrainGenerator : MonoBehaviour
         ret /= denom;
 
         return Mathf.Clamp01(ret / denom);
+
+        // float a = Mathf.Abs(sample.x / 10f);
+        // return a - Mathf.Floor(a);
     }
 
     public float[,] GenerateBiomeHeightMapChunk(Vector2 center, Biome biome, Vector2[] noiseSampleOffsets)
     {
-        int dim = 2 * crossBiomeSmoothRange + mapChunkNumVertices;
+        AnimationCurve heightCurve_ThreadSafe = new AnimationCurve(biome.heightCurve.keys);
+        int dim = 2 * crossBiomeHeightSmoothRange + mapChunkNumVertices;
         float[,] heightMap = new float[dim, dim];
 
         float topLeftX = (dim - 1) / -2f;
@@ -78,17 +82,107 @@ public class TerrainGenerator : MonoBehaviour
             for (int y = 0; y < dim; y++)
             {
                 Vector2 samplePoint = new Vector2(topLeftX + x, topLeftY + y) + center;
-                heightMap[x, y] = GetHeightMapSample(samplePoint, biome, noiseSampleOffsets);
+                float height01 = GetHeightMapSample(samplePoint, biome, noiseSampleOffsets);
+                heightMap[x, y] = heightCurve_ThreadSafe.Evaluate(height01) * biome.heightMultiplier;
             }
         }
 
         return heightMap;
     }
 
+    void PopulateSmoothMapCorner(float[,] mapTL, float[,] mapTR, float[,] mapBL, float[,] mapBR, float[,] mapToPopulate, int mapOutXStart, int mapOutYStart)
+    {
+        const int mtlXOff = mapChunkNumVertices - 1, mtlYOff = mapChunkNumVertices - 1;
+        const int mtrXOff = 0, mtrYOff = mapChunkNumVertices - 1;
+        const int mblXOff = mapChunkNumVertices - 1, mblYOff = 0;
+        const int mbrXOff = 0, mbrYOff = 0;
+        for (int x = 0; x < 2 * crossBiomeHeightSmoothRange + 1; x++)
+        {
+            float xlval = ((float)x) / (2f * (float)crossBiomeHeightSmoothRange);
+            Vector4 w1 = Vector4.Lerp(new Vector4(1, 0, 0, 0), new Vector4(0, 1, 0, 0), xlval);
+            Vector4 w2 = Vector4.Lerp(new Vector4(0, 0, 1, 0), new Vector4(0, 0, 0, 1), xlval);
+            for (int y = 0; y < 2 * crossBiomeHeightSmoothRange + 1; y++)
+            {
+                float ylval = ((float)y) / (2f * (float)crossBiomeHeightSmoothRange);
+                Vector4 mapWeights = Vector4.Lerp(w1, w2, ylval);
+
+                float mwsum = mapWeights.x + mapWeights.y + mapWeights.z + mapWeights.w;
+                if (mwsum < 0.999 || mwsum > 1.001)
+                    Debug.Log(string.Format("{0:G} => {1:G} => {2:G}, {3:G} ==> {4:G} ({5:G})", new Vector2(x, y), new Vector2(xlval, ylval), w1, w2, mapWeights, mwsum));
+
+
+                float vtl = mapWeights.x * mapTL[x + mtlXOff, y + mtlYOff];
+                float vtr = mapWeights.y * mapTR[x + mtrXOff, y + mtrYOff];
+                float vbl = mapWeights.z * mapBL[x + mblXOff, y + mblYOff];
+                float vbr = mapWeights.w * mapBR[x + mbrXOff, y + mbrYOff];
+                mapToPopulate[x + mapOutXStart, y + mapOutYStart] = vtl + vtr + vbl + vbr;
+            }
+        }
+    }
+
+    void PopulateSmoothMapTopBottomEdge(float[,] mapTop, float[,] mapBot, float[,] mapToPopulate, int mapOutYStart)
+    {
+        int mtXOff = 2 * crossBiomeHeightSmoothRange + 1, mtYOff = mapChunkNumVertices - 1;
+        int mbXOff = 2 * crossBiomeHeightSmoothRange + 1, mbYOff = 0;
+        int mapOutXOff = 2 * crossBiomeHeightSmoothRange + 1;
+
+        for (int x = 0; x < mapChunkNumVertices - (2 * crossBiomeHeightSmoothRange + 1); x++)
+        {
+            for (int y = 0; y < 2 * crossBiomeHeightSmoothRange + 1; y++)
+            {
+                float ylerpval = (float)y / (float)(2f * crossBiomeHeightSmoothRange);
+                float topval = mapTop[x + mtXOff, y + mtYOff];
+                float botval = mapBot[x + mbXOff, y + mbYOff];
+                mapToPopulate[x + mapOutXOff, y + mapOutYStart] = Mathf.Lerp(topval, botval, ylerpval);
+            }
+        }
+    }
+
+    void PopulateSmoothMapLeftRightEdge(float[,] mapL, float[,] mapR, float[,] mapToPopulate, int mapOutXStart)
+    {
+        int mlXOff = mapChunkNumVertices - 1, mlYOff = 2 * crossBiomeHeightSmoothRange + 1;
+        int mrXOff = 0, mrYOff = 2 * crossBiomeHeightSmoothRange + 1;
+        int mapOutYOff = 2 * crossBiomeHeightSmoothRange + 1;
+
+        for (int x = 0; x < 2 * crossBiomeHeightSmoothRange + 1; x++)
+        {
+            float xlerpval = (float)x / (float)(2f * crossBiomeHeightSmoothRange);
+            for (int y = 0; y < mapChunkNumVertices - (2 * crossBiomeHeightSmoothRange + 1); y++)
+            {
+                float lval = mapL[x + mlXOff, y + mlYOff];
+                float rval = mapR[x + mrXOff, y + mrYOff];
+                mapToPopulate[x + mapOutXStart, y + mapOutYOff] = Mathf.Lerp(lval, rval, xlerpval);
+            }
+        }
+    }
+
+
     float[,] GenerateSmoothedTransitionHeightMap(float[,][,] heightMaps)
     {
-        int dim = 2 * crossBiomeSmoothRange + mapChunkNumVertices;
+        int dim = 2 * crossBiomeHeightSmoothRange + mapChunkNumVertices;
         float[,] ret = new float[dim, dim];
+
+        PopulateSmoothMapCorner(heightMaps[0, 0], heightMaps[1, 0], heightMaps[0, 1], heightMaps[1, 1], ret, 0, 0); //top left
+        PopulateSmoothMapCorner(heightMaps[1, 0], heightMaps[2, 0], heightMaps[1, 1], heightMaps[2, 1], ret, mapChunkNumVertices - 1, 0); //top right
+        PopulateSmoothMapCorner(heightMaps[0, 1], heightMaps[1, 1], heightMaps[0, 2], heightMaps[1, 2], ret, 0, mapChunkNumVertices - 1); //bottom left
+        PopulateSmoothMapCorner(heightMaps[1, 1], heightMaps[2, 1], heightMaps[1, 2], heightMaps[2, 2], ret, mapChunkNumVertices - 1, mapChunkNumVertices - 1); //bottom right
+
+        PopulateSmoothMapLeftRightEdge(heightMaps[0, 1], heightMaps[1, 1], ret, 0); // left edge
+        PopulateSmoothMapLeftRightEdge(heightMaps[1, 1], heightMaps[2, 1], ret, mapChunkNumVertices - 1); // right edge
+
+        PopulateSmoothMapTopBottomEdge(heightMaps[1, 0], heightMaps[1, 1], ret, 0); // top edge
+        PopulateSmoothMapTopBottomEdge(heightMaps[1, 1], heightMaps[1, 2], ret, mapChunkNumVertices - 1); // bottom edge
+
+        for (int x = 2 * crossBiomeHeightSmoothRange + 1; x < mapChunkNumVertices - 1; x++)
+        {
+            for (int y = 2 * crossBiomeHeightSmoothRange + 1; y < mapChunkNumVertices - 1; y++)
+            {
+                ret[x, y] = heightMaps[1, 1][x, y];
+            }
+        }
+
+
+
 
         return ret;
     }
@@ -117,30 +211,30 @@ public class TerrainGenerator : MonoBehaviour
             for (int y = 0; y < 3; y++)
             {
                 Vector2 mapCenter = center + new Vector2((x - 1) * (mapChunkNumVertices - 1), (y - 1) * (mapChunkNumVertices - 1));
-                heightMaps[x, y] = GenerateBiomeHeightMapChunk(mapCenter, neighborBiomes[new Vector2(x, y)], noiseSampleOffsets);
+                heightMaps[x, y] = GenerateBiomeHeightMapChunk(mapCenter, neighborBiomes[new Vector2(x - 1, y - 1)], noiseSampleOffsets);
             }
         }
 
         float[,] heightMap = GenerateSmoothedTransitionHeightMap(heightMaps);
 
-        return new TerrainChunkHeightData(heightMap, crossBiomeSmoothRange, neighborBiomes);
+        return new TerrainChunkHeightData(heightMap, crossBiomeHeightSmoothRange, neighborBiomes);
     }
 
-    public TerrainChunkMeshData GenerateTerrainChunkMesh(TerrainChunkHeightData heightMapData, int levelOfDetail, Dictionary<Vector2, Biome> neighborBiomes)
+    public TerrainChunkMeshData GenerateTerrainChunkMesh(TerrainChunkHeightData heightMapData, int levelOfDetail)
     {
-        //TODO rewrite
-        Biome biome = neighborBiomes[Vector2.one];
-        AnimationCurve heightCurve_ThreadSafe = new AnimationCurve(biome.heightCurve.keys);
-
         int fullMapWidth = heightMapData.heightMap.GetLength(0);
         int fullMapHeight = heightMapData.heightMap.GetLength(1);
-        int meshWidth = fullMapWidth - 2 * heightMapData.marginVtxs;
-        int meshHeight = fullMapHeight - 2 * heightMapData.marginVtxs;
+        int meshWidth = mapChunkNumVertices;
+        int meshHeight = mapChunkNumVertices;
+        int heightMapMargin = heightMapData.marginVtxs;
 
         float topLeftX = (meshWidth - 1) / -2f;
         float topLeftY = (meshHeight - 1) / -2f;
         float topLeftU = (float)heightMapData.marginVtxs / (float)(fullMapWidth - 1);
         float topLeftV = (float)heightMapData.marginVtxs / (float)(fullMapHeight - 1);
+
+        // Debug.Log(string.Format("UV goes from {0}, {1} to {2}, {3}", topLeftU, topLeftV, topLeftU + (float)(meshWidth - 1) / (fullMapWidth - 1f), topLeftV + (float)(meshHeight - 1) / (fullMapHeight - 1f)));
+        // Debug.Log(string.Format("Mesh goes from {0},{1} to {2},{3}", topLeftX, topLeftY, topLeftX + meshWidth - 1, topLeftY + meshHeight - 1));
 
         TerrainChunkMeshData ret = new TerrainChunkMeshData(meshWidth, meshHeight);
 
@@ -164,8 +258,8 @@ public class TerrainGenerator : MonoBehaviour
         {
             for (int y = 0; y < meshHeight; y += vtxStride)
             {
-                ret.meshVertices[vi] = new Vector3(topLeftX + x, heightCurve_ThreadSafe.Evaluate(heightMapData.heightMap[x, y]) * biome.heightMultiplier, topLeftY + y);
-                ret.meshUVs[vi] = new Vector2(topLeftU + x, topLeftV + y);
+                ret.meshVertices[vi] = new Vector3(topLeftX + x, heightMapData.heightMap[x + heightMapMargin, y + heightMapMargin], topLeftY + y);
+                ret.meshUVs[vi] = new Vector2(topLeftU + (float)x / (fullMapWidth - 1f), topLeftV + (float)y / (fullMapHeight - 1f));
 
                 if (x < meshWidth - 1 && y < meshHeight - 1)
                 {
@@ -181,44 +275,46 @@ public class TerrainGenerator : MonoBehaviour
             }
         }
 
+        // Debug.Log("First UV coord is " + ret.meshUVs[0]);
+
         return ret;
     }
 
 
-    public void RequestTerrainChunkHeightData(Action<TerrainChunkHeightData> callback, float xOffset, float yOffset, Biome biome)
+    public void RequestTerrainChunkHeightData(Action<TerrainChunkHeightData> callback, Vector2 offset, Dictionary<Vector2, Biome> neighborBiomes)
     {
         ThreadStart threadStart = delegate
         {
-            TerrainHeightDataRequestThread(callback, xOffset, yOffset, biome);
+            TerrainHeightDataRequestThread(callback, offset, neighborBiomes);
         };
 
         new Thread(threadStart).Start();
     }
 
-    void TerrainHeightDataRequestThread(Action<TerrainChunkHeightData> callback, float xOffset, float yOffset, Biome biome)
+    void TerrainHeightDataRequestThread(Action<TerrainChunkHeightData> callback, Vector2 offset, Dictionary<Vector2, Biome> neighborBiomes)
     {
-        float[,] terrainChunkData = GenerateHeightMap(xOffset, yOffset, biome);
+        TerrainChunkHeightData terrainChunkHeightData = GenerateTerrainChunkHeightData(offset, neighborBiomes);
         lock (terrainChunkHeightCallbackQueue)
         {
-            terrainChunkHeightCallbackQueue.Enqueue(new TerrainCallbackInfo<TerrainChunkHeightData>(callback, terrainChunkData));
+            terrainChunkHeightCallbackQueue.Enqueue(new TerrainCallbackInfo<TerrainChunkHeightData>(callback, terrainChunkHeightData));
         }
     }
-    public void RequestTerrainChunkMeshData(Action<TerrainChunkMeshData> callback, TerrainChunkHeightData heightMapData, int lod, Dictionary<Vector2, Biome> neighborBiomes)
+    public void RequestTerrainChunkMeshData(Action<TerrainChunkMeshData> callback, TerrainChunkHeightData heightMapData, int lod)
     {
         ThreadStart threadStart = delegate
         {
-            TerrainMeshDataRequestThread(callback, heightMapData, lod, neighborBiomes);
+            TerrainMeshDataRequestThread(callback, heightMapData, lod);
         };
 
         new Thread(threadStart).Start();
     }
 
-    void TerrainMeshDataRequestThread(Action<TerrainChunkMeshData> callback, TerrainChunkHeightData heightMapData, int lod, Dictionary<Vector2, Biome> neighborBiomes)
+    void TerrainMeshDataRequestThread(Action<TerrainChunkMeshData> callback, TerrainChunkHeightData heightMapData, int lod)
     {
-        TerrainChunkMeshData terrainChunkData = GenerateTerrainChunkMesh(heightMapData, lod, neighborBiomes);
+        TerrainChunkMeshData terrainChunkMeshData = GenerateTerrainChunkMesh(heightMapData, lod);
         lock (terrainChunkMeshCallbackQueue)
         {
-            terrainChunkMeshCallbackQueue.Enqueue(new TerrainCallbackInfo<TerrainChunkMeshData>(callback, terrainChunkData));
+            terrainChunkMeshCallbackQueue.Enqueue(new TerrainCallbackInfo<TerrainChunkMeshData>(callback, terrainChunkMeshData));
         }
     }
 
@@ -276,7 +372,8 @@ public struct TerrainChunkMeshData
 
 public struct TerrainChunkHeightData
 {
-    //NOTE this height map is NOT on [0,1] scale, but is already evaluated mesh height according to biome
+    //NOTE this height map is NOT on [0,1] scale, but is already evaluated mesh height according to biome with smoothing at transitions
+    //Therefore, at edges of biome, heights might be out of typical range
     public float[,] heightMap;
     public Dictionary<Vector2, Biome> neighborBiomes;
     public int marginVtxs;

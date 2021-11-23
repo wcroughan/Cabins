@@ -9,7 +9,7 @@ public class EndlessTerrain : MonoBehaviour
     [SerializeField]
     GameObject terrainChunkPrefab;
     static GameObject chunkPrefab;
-    const int maxMapViewDistance = 800;
+    const int maxMapViewDistance = 400;
 
     [SerializeField]
     Biome[] biomes;
@@ -53,7 +53,8 @@ public class EndlessTerrain : MonoBehaviour
 
     Biome GetBiomeForCoord(Vector2 coord)
     {
-        return biomes[0];
+        // return biomes[0];
+        return biomes[Mathf.Abs(Mathf.RoundToInt(coord.x / 2f + coord.y / 3f)) % biomes.Length];
     }
 
     Dictionary<Vector2, Biome> GetNeighborBiomesForCoord(Vector2 coord)
@@ -112,7 +113,7 @@ public class EndlessTerrain : MonoBehaviour
         LODMesh[] lODMeshes;
         int previousLOD = -1;
         bool heightMapReceived = false;
-        float[,] heightMap;
+        TerrainChunkHeightData terrainChunkHeightData;
 
         public TerrainChunkGameObject(Vector2 coord, int size, Transform parent, Biome biome, Dictionary<Vector2, Biome> neighborBiomes)
         {
@@ -139,15 +140,15 @@ public class EndlessTerrain : MonoBehaviour
             this.biome = biome;
             this.neighborBiomes = neighborBiomes;
 
-            terrainGenerator.RequestTerrainChunkHeightData(OnTerrainChunkHeightReceived, position.x, position.y, biome);
+            terrainGenerator.RequestTerrainChunkHeightData(OnTerrainChunkHeightReceived, position, neighborBiomes);
         }
 
-        void OnTerrainChunkHeightReceived(float[,] heightMap)
+        void OnTerrainChunkHeightReceived(TerrainChunkHeightData terrainChunkHeightData)
         {
-            this.heightMap = heightMap;
+            this.terrainChunkHeightData = terrainChunkHeightData;
 
-            int width = heightMap.GetLength(0);
-            int height = heightMap.GetLength(1);
+            int width = terrainChunkHeightData.heightMap.GetLength(0);
+            int height = terrainChunkHeightData.heightMap.GetLength(1);
             Texture2D texture = new Texture2D(width, height);
 
             Color[] colorMap = new Color[width * height];
@@ -155,7 +156,7 @@ public class EndlessTerrain : MonoBehaviour
             {
                 for (int y = 0; y < width; y++)
                 {
-                    colorMap[x + y * width] = biome.gradient.Evaluate(heightMap[x, y]);
+                    colorMap[x + y * width] = biome.GetColorForHeight(terrainChunkHeightData.heightMap[x, y]);
                 }
             }
 
@@ -178,7 +179,9 @@ public class EndlessTerrain : MonoBehaviour
 
             if (viewable)
             {
-                int lod = Mathf.FloorToInt(Mathf.Sqrt(viewDistance) / maxMapViewDistance * 6.99f);
+                // int lod = Mathf.FloorToInt(Mathf.Sqrt(viewDistance) / maxMapViewDistance * 6.99f);
+                int lod = 0;
+                Debug.LogWarning("LOD is always 0");
 
                 if (lod != previousLOD)
                 {
@@ -190,7 +193,7 @@ public class EndlessTerrain : MonoBehaviour
                     }
                     else if (!lm.meshRequested)
                     {
-                        lm.RequestMesh(heightMap);
+                        lm.RequestMesh(terrainChunkHeightData);
                     }
                 }
 
@@ -229,10 +232,10 @@ public class EndlessTerrain : MonoBehaviour
             updateCallback();
         }
 
-        public void RequestMesh(float[,] heightMap)
+        public void RequestMesh(TerrainChunkHeightData terrainChunkHeightData)
         {
             meshRequested = true;
-            terrainGenerator.RequestTerrainChunkMeshData(OnMeshDataReceived, heightMap, lod, neighborBiomes);
+            terrainGenerator.RequestTerrainChunkMeshData(OnMeshDataReceived, terrainChunkHeightData, lod);
         }
     }
 }

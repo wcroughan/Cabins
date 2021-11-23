@@ -7,7 +7,7 @@ public class TerrainDisplay : MonoBehaviour
     [SerializeField]
     public bool autoUpdate;
     [SerializeField]
-    float xCoord, yCoord;
+    Vector2 coord;
     [SerializeField, Range(0, 6)]
     int levelOfDetail;
     [SerializeField]
@@ -67,8 +67,9 @@ public class TerrainDisplay : MonoBehaviour
         neighborBiomes[new Vector2(1, 1)] = borderBiomeCorner;
 
         TerrainGenerator tgen = TerrainGenerator.Instance;
-        float[,] heightMap = tgen.GenerateHeightMap(xCoord, yCoord, centerBiome);
-        TerrainChunkMeshData tc = tgen.GenerateTerrainChunkMesh(heightMap, levelOfDetail, neighborBiomes);
+        TerrainChunkHeightData terrainChunkHeightData = tgen.GenerateTerrainChunkHeightData(coord, neighborBiomes);
+        TerrainChunkMeshData tc = tgen.GenerateTerrainChunkMesh(terrainChunkHeightData, levelOfDetail);
+        float[,] heightMap = terrainChunkHeightData.heightMap;
         int width = heightMap.GetLength(0);
         int height = heightMap.GetLength(1);
         Texture2D texture = new Texture2D(width, height);
@@ -78,7 +79,7 @@ public class TerrainDisplay : MonoBehaviour
         {
             for (int y = 0; y < width; y++)
             {
-                colorMap[x + y * width] = centerBiome.gradient.Evaluate(heightMap[x, y]);
+                colorMap[x + y * width] = centerBiome.GetColorForHeight(heightMap[x, y]);
             }
         }
 

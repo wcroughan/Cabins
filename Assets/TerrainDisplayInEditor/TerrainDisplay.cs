@@ -11,9 +11,7 @@ public class TerrainDisplay : MonoBehaviour
     [SerializeField, Range(0, 6)]
     int levelOfDetail;
     [SerializeField]
-    Biome centerBiome;
-    [SerializeField]
-    Biome borderBiomeX, borderBiomeY, borderBiomeCorner;
+    public Biome centerBiome, borderBiomeX, borderBiomeY, borderBiomeCorner;
 
     // Start is called before the first frame update
     void Start()
@@ -72,28 +70,12 @@ public class TerrainDisplay : MonoBehaviour
         float[,] heightMap = terrainChunkHeightData.heightMap;
         int width = heightMap.GetLength(0);
         int height = heightMap.GetLength(1);
-        Texture2D texture = new Texture2D(width, height);
-
-        Color[] colorMap = new Color[width * height];
-        for (int x = 0; x < width; x++)
-        {
-            for (int y = 0; y < width; y++)
-            {
-                colorMap[x + y * width] = centerBiome.GetColorForHeight(heightMap[x, y]);
-            }
-        }
-
-        texture.wrapMode = TextureWrapMode.Clamp;
-        texture.SetPixels(colorMap);
-        texture.Apply();
 
         MeshFilter filter = GetComponent<MeshFilter>();
         filter.sharedMesh = tc.CreateMesh();
 
         MeshRenderer renderer = GetComponent<MeshRenderer>();
-        renderer.sharedMaterial.mainTexture = texture;
-        // renderer.transform.localScale = new Vector3(width / 10f, 1, height / 10f);
-        // renderer.transform.localScale = new Vector3(width, 1, height);
+        renderer.sharedMaterial.mainTexture = terrainChunkHeightData.CreateTexture();
     }
 
 }

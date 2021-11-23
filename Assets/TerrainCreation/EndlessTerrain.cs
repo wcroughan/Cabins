@@ -31,6 +31,10 @@ public class EndlessTerrain : MonoBehaviour
     Dictionary<Vector2, TerrainChunkGameObject> terrainChunkDictionary = new Dictionary<Vector2, TerrainChunkGameObject>();
     static List<TerrainChunkGameObject> chunksVisibleLastUpdate = new List<TerrainChunkGameObject>();
 
+    [SerializeField]
+    int seed;
+    private int randomOffsetRange = 1000;
+
     // Start is called before the first frame update
     void Start()
     {
@@ -56,8 +60,13 @@ public class EndlessTerrain : MonoBehaviour
 
     Biome GetBiomeForCoord(Vector2 coord)
     {
-        // return biomes[0];
-        return biomes[Mathf.Abs(Mathf.RoundToInt(coord.x / 2f + coord.y / 3f)) % biomes.Length];
+        System.Random rngesus = new System.Random(seed);
+        float x = rngesus.Next(-randomOffsetRange, randomOffsetRange) + coord.x / 0.72f;
+        float y = rngesus.Next(-randomOffsetRange, randomOffsetRange) + coord.y / 0.72f;
+        float noiseVal = Mathf.PerlinNoise(x, y);
+        int bidx = Mathf.RoundToInt(noiseVal * 1000f * biomes.Length) % biomes.Length;
+        Debug.Log(coord + " " + x + " " + y + " " + noiseVal + " " + bidx);
+        return biomes[bidx];
     }
 
     Dictionary<Vector2, Biome> GetNeighborBiomesForCoord(Vector2 coord)
@@ -79,8 +88,13 @@ public class EndlessTerrain : MonoBehaviour
         foreach (TerrainChunkGameObject tc in chunksVisibleLastUpdate)
             tc.SetVisible(false);
 
+        chunksVisibleLastUpdate.Clear();
+
         int currentChunkX = Mathf.RoundToInt(viewerPosition.x / chunkSize);
         int currentChunkY = Mathf.RoundToInt(viewerPosition.y / chunkSize);
+        int numFound = 0;
+        int numMade = 0;
+
 
         for (int xOffset = -chunksVisibleInViewDistance; xOffset <= chunksVisibleInViewDistance; xOffset++)
         {
@@ -91,14 +105,17 @@ public class EndlessTerrain : MonoBehaviour
                 if (terrainChunkDictionary.ContainsKey(chunkCoord))
                 {
                     terrainChunkDictionary[chunkCoord].UpdateViewable();
+                    numFound++;
                 }
                 else
                 {
                     Dictionary<Vector2, Biome> neighborBiomes = GetNeighborBiomesForCoord(chunkCoord);
                     terrainChunkDictionary.Add(chunkCoord, new TerrainChunkGameObject(chunkCoord, chunkSize, transform, neighborBiomes[Vector2.zero], neighborBiomes, detailLevels));
+                    numMade++;
                 }
             }
         }
+
     }
 
     public class TerrainChunkGameObject
@@ -112,16 +129,18 @@ public class EndlessTerrain : MonoBehaviour
 
         MeshRenderer meshRenderer;
         MeshFilter meshFilter;
-        Rigidbody rigidbody;
+        MeshCollider meshCollider;
 
         LODMesh[] lODMeshes;
         LODThreshInfo[] lODThreshInfos;
         int previousLOD = -1;
         bool heightMapReceived = false;
         TerrainChunkHeightData terrainChunkHeightData;
+        bool lastViewable = false;
 
         public TerrainChunkGameObject(Vector2 coord, int size, Transform parent, Biome biome, Dictionary<Vector2, Biome> neighborBiomes, LODThreshInfo[] detailLevels)
         {
+
             position = coord * size;
             bounds = new Bounds(position, Vector2.one * size);
             Vector3 positionV3 = new Vector3(position.x, 0, position.y);
@@ -130,7 +149,8 @@ public class EndlessTerrain : MonoBehaviour
             meshObject.name = "Chunk " + coord;
             meshRenderer = meshObject.GetComponent<MeshRenderer>();
             meshFilter = meshObject.GetComponent<MeshFilter>();
-            rigidbody = meshObject.GetComponent<Rigidbody>();
+            meshCollider = meshObject.GetComponent<MeshCollider>();
+            meshCollider.enabled = false;
             meshObject.transform.position = positionV3;
             meshObject.transform.SetParent(parent, false);
 
@@ -144,6 +164,7 @@ public class EndlessTerrain : MonoBehaviour
             }
             this.lODThreshInfos = detailLevels;
 
+
             this.biome = biome;
             this.neighborBiomes = neighborBiomes;
 
@@ -153,24 +174,7 @@ public class EndlessTerrain : MonoBehaviour
         void OnTerrainChunkHeightReceived(TerrainChunkHeightData terrainChunkHeightData)
         {
             this.terrainChunkHeightData = terrainChunkHeightData;
-
-            int width = terrainChunkHeightData.heightMap.GetLength(0);
-            int height = terrainChunkHeightData.heightMap.GetLength(1);
-            Texture2D texture = new Texture2D(width, height);
-
-            Color[] colorMap = new Color[width * height];
-            for (int x = 0; x < width; x++)
-            {
-                for (int y = 0; y < width; y++)
-                {
-                    colorMap[x + y * width] = biome.GetColorForHeight(terrainChunkHeightData.heightMap[x, y]);
-                }
-            }
-
-            texture.wrapMode = TextureWrapMode.Clamp;
-            texture.SetPixels(colorMap);
-            texture.Apply();
-            meshRenderer.material.mainTexture = texture;
+            meshRenderer.material.mainTexture = terrainChunkHeightData.CreateTexture();
 
             heightMapReceived = true;
             UpdateViewable();
@@ -208,11 +212,31 @@ public class EndlessTerrain : MonoBehaviour
 
                 if (lod != previousLOD)
                 {
+                    if (meshCollider.enabled && lod != 0)
+                    {
+                        meshCollider.enabled = false;
+                    }
                     LODMesh lm = lODMeshes[lod];
                     if (lm.meshReceived)
                     {
-                        previousLOD = lod;
                         meshFilter.mesh = lm.mesh;
+                        if (lod == 0)
+                        {
+                            if (lm.meshBakeReceived)
+                            {
+                                meshCollider.sharedMesh = lm.mesh;
+                                meshCollider.enabled = true;
+                                previousLOD = lod;
+                            }
+                            else if (!lm.meshBakeRequested)
+                            {
+                                lm.RequestMeshBake();
+                            }
+                        }
+                        else
+                        {
+                            previousLOD = lod;
+                        }
                     }
                     else if (!lm.meshRequested)
                     {
@@ -223,7 +247,11 @@ public class EndlessTerrain : MonoBehaviour
                 chunksVisibleLastUpdate.Add(this);
             }
 
+            // if (viewable != lastViewable)
+            // {
+            // lastViewable = viewable;
             SetVisible(viewable);
+            // }
         }
 
         public void SetVisible(bool visible)
@@ -237,6 +265,8 @@ public class EndlessTerrain : MonoBehaviour
         int lod;
         public bool meshRequested;
         public bool meshReceived;
+        public bool meshBakeRequested;
+        public bool meshBakeReceived;
         public Mesh mesh;
         System.Action updateCallback;
         Dictionary<Vector2, Biome> neighborBiomes;
@@ -259,6 +289,18 @@ public class EndlessTerrain : MonoBehaviour
         {
             meshRequested = true;
             terrainGenerator.RequestTerrainChunkMeshData(OnMeshDataReceived, terrainChunkHeightData, lod);
+        }
+
+        public void RequestMeshBake()
+        {
+            meshBakeRequested = true;
+            terrainGenerator.RequestTerrainMeshBake(OnMeshBakeReceived, mesh.GetInstanceID());
+        }
+
+        void OnMeshBakeReceived(bool success)
+        {
+            meshBakeReceived = success;
+            updateCallback();
         }
     }
 

@@ -23,6 +23,12 @@ public class TerrainDisplayEditor : Editor
             remakeTerrain = true;
         }
 
+        if (GUILayout.Button("Apply Center to all"))
+        {
+            terrainDisplay.borderBiomeCorner = terrainDisplay.borderBiomeX = terrainDisplay.borderBiomeY = terrainDisplay.centerBiome;
+            remakeTerrain = true;
+        }
+
         if (remakeTerrain)
             terrainDisplay.InitTerrain();
     }

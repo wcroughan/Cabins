@@ -18,7 +18,7 @@ public class Biome : UpdatableTerrainInfo
     [SerializeField]
     public float heightMultiplier = 10f;
     [SerializeField]
-    Gradient gradient;
+    public Gradient gradient;
 
     protected override void OnValidate()
     {

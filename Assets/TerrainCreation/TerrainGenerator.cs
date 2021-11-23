@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using UnityEngine;
 using System;
 using System.Threading;
+using System.Threading.Tasks;
 
 public class TerrainGenerator : MonoBehaviour
 {
@@ -11,14 +12,17 @@ public class TerrainGenerator : MonoBehaviour
     [SerializeField, Min(1)]
     int crossBiomeHeightSmoothRange = 10;
 
-    public const int LOD_MIN = 0, LOD_MAX = 6;
+    public const int LOD_MIN = 0, LOD_MAX = 4;
 
+    // public const int mapChunkNumVertices = 73;
     public const int mapChunkNumVertices = 241;
 
     private int randomOffsetRange = 100000;
 
     Queue<TerrainCallbackInfo<TerrainChunkMeshData>> terrainChunkMeshCallbackQueue = new Queue<TerrainCallbackInfo<TerrainChunkMeshData>>();
     Queue<TerrainCallbackInfo<TerrainChunkHeightData>> terrainChunkHeightCallbackQueue = new Queue<TerrainCallbackInfo<TerrainChunkHeightData>>();
+    Queue<TerrainCallbackInfo<bool>> terrainMeshBakeCallbackQueue = new Queue<TerrainCallbackInfo<bool>>();
+
 
     //Singleton
     private static TerrainGenerator _instance;
@@ -217,6 +221,7 @@ public class TerrainGenerator : MonoBehaviour
 
         float[,] heightMap = GenerateSmoothedTransitionHeightMap(heightMaps);
 
+
         return new TerrainChunkHeightData(heightMap, crossBiomeHeightSmoothRange, neighborBiomes);
     }
 
@@ -232,9 +237,6 @@ public class TerrainGenerator : MonoBehaviour
         float topLeftY = (meshHeight - 1) / -2f;
         float topLeftU = (float)heightMapData.marginVtxs / (float)(fullMapWidth - 1);
         float topLeftV = (float)heightMapData.marginVtxs / (float)(fullMapHeight - 1);
-
-        // Debug.Log(string.Format("UV goes from {0}, {1} to {2}, {3}", topLeftU, topLeftV, topLeftU + (float)(meshWidth - 1) / (fullMapWidth - 1f), topLeftV + (float)(meshHeight - 1) / (fullMapHeight - 1f)));
-        // Debug.Log(string.Format("Mesh goes from {0},{1} to {2},{3}", topLeftX, topLeftY, topLeftX + meshWidth - 1, topLeftY + meshHeight - 1));
 
         TerrainChunkMeshData ret = new TerrainChunkMeshData(meshWidth, meshHeight);
 
@@ -275,7 +277,7 @@ public class TerrainGenerator : MonoBehaviour
             }
         }
 
-        // Debug.Log("First UV coord is " + ret.meshUVs[0]);
+        ret.BakeNormals();
 
         return ret;
     }
@@ -283,12 +285,10 @@ public class TerrainGenerator : MonoBehaviour
 
     public void RequestTerrainChunkHeightData(Action<TerrainChunkHeightData> callback, Vector2 offset, Dictionary<Vector2, Biome> neighborBiomes)
     {
-        ThreadStart threadStart = delegate
+        Task.Run(() =>
         {
             TerrainHeightDataRequestThread(callback, offset, neighborBiomes);
-        };
-
-        new Thread(threadStart).Start();
+        });
     }
 
     void TerrainHeightDataRequestThread(Action<TerrainChunkHeightData> callback, Vector2 offset, Dictionary<Vector2, Biome> neighborBiomes)
@@ -299,14 +299,31 @@ public class TerrainGenerator : MonoBehaviour
             terrainChunkHeightCallbackQueue.Enqueue(new TerrainCallbackInfo<TerrainChunkHeightData>(callback, terrainChunkHeightData));
         }
     }
+
+    public void RequestTerrainMeshBake(Action<bool> callback, int meshid)
+    {
+        Task.Run(() =>
+        {
+            TerrainMeshBakeRequestThread(callback, meshid);
+        });
+    }
+
+    void TerrainMeshBakeRequestThread(Action<bool> callback, int meshid)
+    {
+        Physics.BakeMesh(meshid, false);
+        lock (terrainMeshBakeCallbackQueue)
+        {
+            terrainMeshBakeCallbackQueue.Enqueue(new TerrainCallbackInfo<bool>(callback, true));
+        }
+    }
+
+
     public void RequestTerrainChunkMeshData(Action<TerrainChunkMeshData> callback, TerrainChunkHeightData heightMapData, int lod)
     {
-        ThreadStart threadStart = delegate
+        Task.Run(() =>
         {
             TerrainMeshDataRequestThread(callback, heightMapData, lod);
-        };
-
-        new Thread(threadStart).Start();
+        });
     }
 
     void TerrainMeshDataRequestThread(Action<TerrainChunkMeshData> callback, TerrainChunkHeightData heightMapData, int lod)
@@ -330,6 +347,12 @@ public class TerrainGenerator : MonoBehaviour
             TerrainCallbackInfo<TerrainChunkHeightData> item = terrainChunkHeightCallbackQueue.Dequeue();
             item.callback(item.parameter);
         }
+        for (int i = 0; i < terrainMeshBakeCallbackQueue.Count; i++)
+        {
+            TerrainCallbackInfo<bool> item = terrainMeshBakeCallbackQueue.Dequeue();
+            item.callback(item.parameter);
+        }
+
     }
 
     struct TerrainCallbackInfo<T>
@@ -351,12 +374,54 @@ public struct TerrainChunkMeshData
     public Vector3[] meshVertices;
     public int[] meshTriangles;
     public Vector2[] meshUVs;
+    public Vector3[] bakedNormals;
 
     public TerrainChunkMeshData(int meshWidth, int meshHeight)
     {
         meshVertices = new Vector3[meshWidth * meshHeight];
         meshUVs = new Vector2[meshWidth * meshHeight];
         meshTriangles = new int[(meshWidth - 1) * (meshHeight - 1) * 6];
+        bakedNormals = null;
+    }
+
+    Vector3[] CalculateNormals()
+    {
+        Vector3[] ret = new Vector3[meshVertices.Length];
+
+        for (int ti = 0; ti < meshTriangles.Length; ti += 3)
+        {
+            int a = meshTriangles[ti];
+            int b = meshTriangles[ti + 1];
+            int c = meshTriangles[ti + 2];
+            Vector3 triNormal = TriangleNormal(a, b, c);
+
+            ret[a] += triNormal;
+            ret[b] += triNormal;
+            ret[c] += triNormal;
+        }
+
+        foreach (Vector3 v in ret)
+        {
+            v.Normalize();
+        }
+
+        return ret;
+    }
+
+    Vector3 TriangleNormal(int a, int b, int c)
+    {
+        Vector3 va = meshVertices[a];
+        Vector3 vb = meshVertices[b];
+        Vector3 vc = meshVertices[c];
+
+        Vector3 dab = vb - va;
+        Vector3 dac = vc - va;
+        return Vector3.Cross(dab, dac).normalized;
+    }
+
+    public void BakeNormals()
+    {
+        bakedNormals = CalculateNormals();
     }
 
     public Mesh CreateMesh()
@@ -365,7 +430,7 @@ public struct TerrainChunkMeshData
         mesh.vertices = meshVertices;
         mesh.triangles = meshTriangles;
         mesh.uv = meshUVs;
-        mesh.RecalculateNormals();
+        mesh.normals = bakedNormals;
         return mesh;
     }
 }
@@ -377,11 +442,42 @@ public struct TerrainChunkHeightData
     public float[,] heightMap;
     public Dictionary<Vector2, Biome> neighborBiomes;
     public int marginVtxs;
+    Color[] colorMap;
 
     public TerrainChunkHeightData(float[,] heightMap, int marginVtxs, Dictionary<Vector2, Biome> neighborBiomes)
     {
         this.heightMap = heightMap;
         this.marginVtxs = marginVtxs;
         this.neighborBiomes = neighborBiomes;
+
+        int width = heightMap.GetLength(0);
+        int height = heightMap.GetLength(1);
+
+        Biome biome = neighborBiomes[Vector2.zero];
+        Gradient gradient_ThreadSafe = new Gradient();
+        gradient_ThreadSafe.SetKeys(biome.gradient.colorKeys, biome.gradient.alphaKeys);
+
+        colorMap = new Color[width * height];
+        for (int x = 0; x < width; x++)
+        {
+            for (int y = 0; y < width; y++)
+            {
+                colorMap[x + y * width] = gradient_ThreadSafe.Evaluate(heightMap[x, y] / biome.heightMultiplier);
+            }
+        }
+    }
+
+    public Texture2D CreateTexture()
+    {
+        int width = heightMap.GetLength(0);
+        int height = heightMap.GetLength(1);
+
+        Texture2D texture = new Texture2D(width, height);
+
+        texture.wrapMode = TextureWrapMode.Clamp;
+        texture.SetPixels(colorMap);
+        texture.Apply();
+
+        return texture;
     }
 }

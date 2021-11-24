@@ -20,7 +20,7 @@ public class @InputActions : IInputActionCollection, IDisposable
             ""actions"": [
                 {
                     ""name"": ""Move"",
-                    ""type"": ""Value"",
+                    ""type"": ""PassThrough"",
                     ""id"": ""be056074-ded0-44dc-a474-ab39a22e6965"",
                     ""expectedControlType"": ""Vector2"",
                     ""processors"": """",
@@ -28,7 +28,7 @@ public class @InputActions : IInputActionCollection, IDisposable
                 },
                 {
                     ""name"": ""Jump"",
-                    ""type"": ""Button"",
+                    ""type"": ""PassThrough"",
                     ""id"": ""dc551ff3-b4f4-4298-9cb9-261219b85dae"",
                     ""expectedControlType"": ""Button"",
                     ""processors"": """",
@@ -36,7 +36,7 @@ public class @InputActions : IInputActionCollection, IDisposable
                 },
                 {
                     ""name"": ""Crouch"",
-                    ""type"": ""Button"",
+                    ""type"": ""PassThrough"",
                     ""id"": ""e60f76fe-ce2d-4ca1-a0fa-fb08dcf68432"",
                     ""expectedControlType"": ""Button"",
                     ""processors"": """",
@@ -57,6 +57,14 @@ public class @InputActions : IInputActionCollection, IDisposable
                     ""expectedControlType"": ""Button"",
                     ""processors"": """",
                     ""interactions"": """"
+                },
+                {
+                    ""name"": ""Look"",
+                    ""type"": ""PassThrough"",
+                    ""id"": ""57ce02ff-03e5-45e2-a930-5dc0bccf71c2"",
+                    ""expectedControlType"": ""Vector2"",
+                    ""processors"": """",
+                    ""interactions"": """"
                 }
             ],
             ""bindings"": [
@@ -74,7 +82,7 @@ public class @InputActions : IInputActionCollection, IDisposable
                 {
                     ""name"": ""up"",
                     ""id"": ""f7b2c36b-2d75-4e44-a35f-0c948f87c79e"",
-                    ""path"": ""<Keyboard>/e"",
+                    ""path"": ""<Keyboard>/w"",
                     ""interactions"": """",
                     ""processors"": """",
                     ""groups"": """",
@@ -85,7 +93,7 @@ public class @InputActions : IInputActionCollection, IDisposable
                 {
                     ""name"": ""down"",
                     ""id"": ""184fb30d-afda-480a-b92f-19c4c27c67c4"",
-                    ""path"": ""<Keyboard>/d"",
+                    ""path"": ""<Keyboard>/s"",
                     ""interactions"": """",
                     ""processors"": """",
                     ""groups"": """",
@@ -96,7 +104,7 @@ public class @InputActions : IInputActionCollection, IDisposable
                 {
                     ""name"": ""left"",
                     ""id"": ""419b0825-9adc-4e7d-a977-07f962a6b16e"",
-                    ""path"": ""<Keyboard>/s"",
+                    ""path"": ""<Keyboard>/a"",
                     ""interactions"": """",
                     ""processors"": """",
                     ""groups"": """",
@@ -107,7 +115,7 @@ public class @InputActions : IInputActionCollection, IDisposable
                 {
                     ""name"": ""right"",
                     ""id"": ""8d9a0eae-6850-40d9-ba2f-c04b2b547682"",
-                    ""path"": ""<Keyboard>/f"",
+                    ""path"": ""<Keyboard>/d"",
                     ""interactions"": """",
                     ""processors"": """",
                     ""groups"": """",
@@ -129,7 +137,7 @@ public class @InputActions : IInputActionCollection, IDisposable
                 {
                     ""name"": """",
                     ""id"": ""54d7821d-1da0-40db-a5c8-cefde3aaecd4"",
-                    ""path"": ""<Keyboard>/a"",
+                    ""path"": ""<Keyboard>/leftCtrl"",
                     ""interactions"": """",
                     ""processors"": """",
                     ""groups"": """",
@@ -151,11 +159,22 @@ public class @InputActions : IInputActionCollection, IDisposable
                 {
                     ""name"": """",
                     ""id"": ""a306e459-29eb-42f0-95c0-0ce75391fbe3"",
-                    ""path"": ""<Keyboard>/w"",
+                    ""path"": ""<Keyboard>/q"",
                     ""interactions"": """",
                     ""processors"": """",
                     ""groups"": """",
                     ""action"": ""ToggleFlying"",
+                    ""isComposite"": false,
+                    ""isPartOfComposite"": false
+                },
+                {
+                    ""name"": """",
+                    ""id"": ""f2a9d37d-f16f-43eb-8155-b18a37b53b94"",
+                    ""path"": ""<Mouse>/delta"",
+                    ""interactions"": """",
+                    ""processors"": """",
+                    ""groups"": """",
+                    ""action"": ""Look"",
                     ""isComposite"": false,
                     ""isPartOfComposite"": false
                 }
@@ -198,6 +217,7 @@ public class @InputActions : IInputActionCollection, IDisposable
         m_WorldMovement_Crouch = m_WorldMovement.FindAction("Crouch", throwIfNotFound: true);
         m_WorldMovement_Sprint = m_WorldMovement.FindAction("Sprint", throwIfNotFound: true);
         m_WorldMovement_ToggleFlying = m_WorldMovement.FindAction("ToggleFlying", throwIfNotFound: true);
+        m_WorldMovement_Look = m_WorldMovement.FindAction("Look", throwIfNotFound: true);
         // GameControl
         m_GameControl = asset.FindActionMap("GameControl", throwIfNotFound: true);
         m_GameControl_Pause = m_GameControl.FindAction("Pause", throwIfNotFound: true);
@@ -255,6 +275,7 @@ public class @InputActions : IInputActionCollection, IDisposable
     private readonly InputAction m_WorldMovement_Crouch;
     private readonly InputAction m_WorldMovement_Sprint;
     private readonly InputAction m_WorldMovement_ToggleFlying;
+    private readonly InputAction m_WorldMovement_Look;
     public struct WorldMovementActions
     {
         private @InputActions m_Wrapper;
@@ -264,6 +285,7 @@ public class @InputActions : IInputActionCollection, IDisposable
         public InputAction @Crouch => m_Wrapper.m_WorldMovement_Crouch;
         public InputAction @Sprint => m_Wrapper.m_WorldMovement_Sprint;
         public InputAction @ToggleFlying => m_Wrapper.m_WorldMovement_ToggleFlying;
+        public InputAction @Look => m_Wrapper.m_WorldMovement_Look;
         public InputActionMap Get() { return m_Wrapper.m_WorldMovement; }
         public void Enable() { Get().Enable(); }
         public void Disable() { Get().Disable(); }
@@ -288,6 +310,9 @@ public class @InputActions : IInputActionCollection, IDisposable
                 @ToggleFlying.started -= m_Wrapper.m_WorldMovementActionsCallbackInterface.OnToggleFlying;
                 @ToggleFlying.performed -= m_Wrapper.m_WorldMovementActionsCallbackInterface.OnToggleFlying;
                 @ToggleFlying.canceled -= m_Wrapper.m_WorldMovementActionsCallbackInterface.OnToggleFlying;
+                @Look.started -= m_Wrapper.m_WorldMovementActionsCallbackInterface.OnLook;
+                @Look.performed -= m_Wrapper.m_WorldMovementActionsCallbackInterface.OnLook;
+                @Look.canceled -= m_Wrapper.m_WorldMovementActionsCallbackInterface.OnLook;
             }
             m_Wrapper.m_WorldMovementActionsCallbackInterface = instance;
             if (instance != null)
@@ -307,6 +332,9 @@ public class @InputActions : IInputActionCollection, IDisposable
                 @ToggleFlying.started += instance.OnToggleFlying;
                 @ToggleFlying.performed += instance.OnToggleFlying;
                 @ToggleFlying.canceled += instance.OnToggleFlying;
+                @Look.started += instance.OnLook;
+                @Look.performed += instance.OnLook;
+                @Look.canceled += instance.OnLook;
             }
         }
     }
@@ -351,6 +379,7 @@ public class @InputActions : IInputActionCollection, IDisposable
         void OnCrouch(InputAction.CallbackContext context);
         void OnSprint(InputAction.CallbackContext context);
         void OnToggleFlying(InputAction.CallbackContext context);
+        void OnLook(InputAction.CallbackContext context);
     }
     public interface IGameControlActions
     {

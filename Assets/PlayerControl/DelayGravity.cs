@@ -10,11 +10,13 @@ public class DelayGravity : MonoBehaviour
     {
         rb = GetComponent<Rigidbody>();
         rb.useGravity = false;
-        StartCoroutine(ActivateGravityAfterDelay(3));
+        StartCoroutine(ActivateGravityAfterDelay());
     }
-    IEnumerator ActivateGravityAfterDelay(float seconds)
+    IEnumerator ActivateGravityAfterDelay()
     {
-        yield return new WaitForSeconds(seconds);
+        while (!EndlessTerrain.hasAnyTerrainCollider)
+            yield return new WaitForSeconds(1);
+        Debug.Log(EndlessTerrain.hasAnyTerrainCollider);
         rb.useGravity = true;
     }
 

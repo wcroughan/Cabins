@@ -75,7 +75,7 @@ public class TerrainDisplay : MonoBehaviour
         filter.sharedMesh = tc.CreateMesh();
 
         MeshRenderer renderer = GetComponent<MeshRenderer>();
-        renderer.material.mainTexture = terrainChunkHeightData.CreateTexture();
+        renderer.sharedMaterial.mainTexture = terrainChunkHeightData.CreateTexture();
     }
 
 }

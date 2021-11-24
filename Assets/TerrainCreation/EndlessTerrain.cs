@@ -28,6 +28,8 @@ public class EndlessTerrain : MonoBehaviour
 
     static TerrainGenerator terrainGenerator;
 
+    public static bool hasAnyTerrainCollider;
+
     Dictionary<Vector2, TerrainChunkGameObject> terrainChunkDictionary = new Dictionary<Vector2, TerrainChunkGameObject>();
     static List<TerrainChunkGameObject> chunksVisibleLastUpdate = new List<TerrainChunkGameObject>();
 
@@ -43,6 +45,7 @@ public class EndlessTerrain : MonoBehaviour
         terrainGenerator = FindObjectOfType<TerrainGenerator>();
         chunkSize = TerrainGenerator.mapChunkNumVertices - 1;
         chunksVisibleInViewDistance = maxMapViewDistance / chunkSize;
+        hasAnyTerrainCollider = false;
         UpdateViewableChunks();
     }
 
@@ -56,6 +59,10 @@ public class EndlessTerrain : MonoBehaviour
             oldViewerPosition = viewerPosition;
             UpdateViewableChunks();
         }
+        else if (!hasAnyTerrainCollider)
+        {
+            UpdateViewableChunks();
+        }
     }
 
     Biome GetBiomeForCoord(Vector2 coord)
@@ -65,7 +72,8 @@ public class EndlessTerrain : MonoBehaviour
         float y = rngesus.Next(-randomOffsetRange, randomOffsetRange) + coord.y / 0.72f;
         float noiseVal = Mathf.PerlinNoise(x, y);
         int bidx = Mathf.RoundToInt(noiseVal * 1000f * biomes.Length) % biomes.Length;
-        // Debug.Log(coord + " " + x + " " + y + " " + noiseVal + " " + bidx);
+        if (bidx < 0)
+            bidx = 0;
         return biomes[bidx];
     }
 
@@ -226,6 +234,7 @@ public class EndlessTerrain : MonoBehaviour
                                 meshCollider.sharedMesh = lm.mesh;
                                 meshCollider.enabled = true;
                                 previousLOD = lod;
+                                hasAnyTerrainCollider = true;
                             }
                             else if (!lm.meshBakeRequested)
                             {

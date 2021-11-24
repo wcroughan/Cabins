@@ -5,43 +5,50 @@ using UnityEngine;
 public class ThirdPersonMovement : MonoBehaviour
 {
     InputActions inputActions;
+    Animator animator;
 
     Rigidbody rb;
     [SerializeField]
-    float speed = 0.6f;
+    float speed = 1f;
+    [SerializeField]
+    float jumpSpeed = 100f;
+    [SerializeField]
+    float godModeVertSpeed = 10f;
+    [SerializeField]
+    float sprintFactor = 1.5f;
     [SerializeField]
     Transform cam;
     [SerializeField]
-    bool alwaysMove = false;
+    public Vector2 userMovement;
 
-    Vector2 movementDir;
-    bool godModeEnabled;
-    bool shouldJump;
-    bool shouldCrouch;
-    bool sprintEnabled;
+    public bool godModeEnabled;
+    public bool shouldJump;
+    public bool shouldCrouch;
+    public bool sprintEnabled;
+
+
+
 
     void OnEnable()
     {
         if (inputActions == null)
         {
-            Debug.Log("Hi from enable!");
             inputActions = new InputActions();
 
             inputActions.GameControl.Pause.performed += ctx => Debug.Break();
 
             godModeEnabled = false;
-            inputActions.WorldMovement.ToggleFlying.performed += ctx => godModeEnabled = !godModeEnabled;
+            inputActions.WorldMovement.ToggleFlying.performed += ctx => GodModePressed();
 
             shouldCrouch = false;
             inputActions.WorldMovement.Crouch.performed += ctx => shouldCrouch = ctx.ReadValueAsButton();
-            // inputActions.WorldMovement.Crouch.canceled += ctx => shouldCrouch = false;
             shouldJump = false;
             inputActions.WorldMovement.Jump.performed += ctx => shouldJump = ctx.ReadValueAsButton();
             // inputActions.WorldMovement.Jump.canceled += ctx => shouldJump = false;
             sprintEnabled = false;
             inputActions.WorldMovement.Sprint.performed += ctx => sprintEnabled = !sprintEnabled;
 
-            inputActions.WorldMovement.Move.performed += ctx => movementDir = ctx.ReadValue<Vector2>();
+            inputActions.WorldMovement.Move.performed += ctx => userMovement = ctx.ReadValue<Vector2>();
 
             inputActions.Enable();
         }
@@ -52,40 +59,55 @@ public class ThirdPersonMovement : MonoBehaviour
         inputActions.Disable();
     }
 
+    void GodModePressed()
+    {
+        godModeEnabled = !godModeEnabled;
+        rb.useGravity = !godModeEnabled;
+    }
+
     void Start()
     {
         // controller = GetComponent<CharacterController>();
         Cursor.lockState = CursorLockMode.Locked;
         rb = GetComponent<Rigidbody>();
+        rb.velocity = new Vector3(0f, 0f, 0.1f);
+        animator = GetComponentInChildren<Animator>();
     }
 
 
-    // Update is called once per frame
-    void Update()
+    void FixedUpdate()
     {
         Vector3 vel = rb.velocity;
-        vel.x += movementDir.x * speed;
-        vel.z += movementDir.y * speed;
-        // movementDir = Vector2.zero;
+        Vector3 camdirForward = cam.forward;
+        camdirForward.y = 0;
+        camdirForward.Normalize();
+        Vector3 camdirRight = cam.right;
+        camdirRight.y = 0;
+        camdirRight.Normalize();
+        Vector3 movementDir = camdirForward * userMovement.y + camdirRight * userMovement.x;
+        vel += movementDir * speed * (sprintEnabled ? sprintFactor : 1f);
+
 
         if (godModeEnabled)
         {
             // Debug.Log("In god mode");
             vel.y = 0;
-            vel.y += shouldJump ? speed : 0;
-            vel.y += shouldCrouch ? -speed : 0;
+            vel.y += shouldJump ? godModeVertSpeed : 0;
+            vel.y += shouldCrouch ? -godModeVertSpeed : 0;
         }
         else
         {
             if (shouldJump)
             {
                 shouldJump = false;
-                vel.y += speed;
+                vel.y += jumpSpeed;
             }
         }
 
         rb.velocity = vel;
 
-        // Debug.Log(vel);
+        float currentSpeed = (new Vector2(vel.x, vel.z)).magnitude;
+        float speedPct = Mathf.Clamp01(Mathf.InverseLerp(0, 50, currentSpeed));
+        animator.SetFloat("SpeedPct", speedPct);
     }
 }

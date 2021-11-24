@@ -9,10 +9,10 @@ public class TerrainGenerator : MonoBehaviour
 {
     [SerializeField]
     int seed = 0;
-    [SerializeField, Min(1)]
+    public const int LOD_MIN = 0, LOD_MAX = 4;
+    [SerializeField, Min(LOD_MAX * 2)]
     int crossBiomeHeightSmoothRange = 10;
 
-    public const int LOD_MIN = 0, LOD_MAX = 4;
 
     // public const int mapChunkNumVertices = 73;
     public const int mapChunkNumVertices = 241;
@@ -254,32 +254,81 @@ public class TerrainGenerator : MonoBehaviour
         int vtxStride = (levelOfDetail == 0) ? 1 : 2 * levelOfDetail;
         int vtxPerLine = (meshWidth - 1) / vtxStride + 1;
 
+        Dictionary<Vector2, Vector3> vtxMap = new Dictionary<Vector2, Vector3>();
+
         int vi = 0;
         int ti = 0;
-        for (int x = 0; x < meshWidth; x += vtxStride)
+        for (int y = -vtxStride; y < meshHeight + vtxStride; y += vtxStride)
         {
-            for (int y = 0; y < meshHeight; y += vtxStride)
+            for (int x = -vtxStride; x < meshWidth + vtxStride; x += vtxStride)
             {
-                ret.meshVertices[vi] = new Vector3(topLeftX + x, heightMapData.heightMap[x + heightMapMargin, y + heightMapMargin], topLeftY + y);
-                ret.meshUVs[vi] = new Vector2(topLeftU + (float)x / (fullMapWidth - 1f), topLeftV + (float)y / (fullMapHeight - 1f));
-
-                if (x < meshWidth - 1 && y < meshHeight - 1)
+                vtxMap[new Vector2(x, y)] = new Vector3(topLeftX + x, heightMapData.heightMap[x + heightMapMargin, y + heightMapMargin], topLeftY + y);
+                if (x > 0 && y > 0 && x < meshWidth && y < meshHeight)
                 {
+                    //main mesh vtx, not on left or top
+                    //add main mesh triangle up and left
+                    ret.meshTriangles[ti++] = vi - vtxPerLine - 1;
+                    ret.meshTriangles[ti++] = vi - 1;
                     ret.meshTriangles[ti++] = vi;
-                    ret.meshTriangles[ti++] = vi + vtxPerLine + 1;
-                    ret.meshTriangles[ti++] = vi + vtxPerLine;
+                    ret.meshTriangles[ti++] = vi - vtxPerLine - 1;
                     ret.meshTriangles[ti++] = vi;
-                    ret.meshTriangles[ti++] = vi + 1;
-                    ret.meshTriangles[ti++] = vi + vtxPerLine + 1;
+                    ret.meshTriangles[ti++] = vi - vtxPerLine;
+                }
+                if (x >= 0 && y >= 0)
+                {
+                    //not on border left or border top, so consider the triangles up and left
+                    //add those normals to any adjacent vertices in the main mesh
+                    //vi at this point is number of vertices add in main mesh
+                    Vector3 pt11 = vtxMap[new Vector2(x - vtxStride, y - vtxStride)];
+                    Vector3 pt12 = vtxMap[new Vector2(x - vtxStride, y)];
+                    Vector3 pt13 = vtxMap[new Vector2(x, y)];
+                    Vector3 t1n = TriangleNormal(pt11, pt12, pt13);
+                    if (y > 0 && x > 0) // not top row and not left column
+                        ret.vtxNormals[vi - vtxPerLine - 1] += t1n;
+                    if (x < meshWidth && y < meshHeight) // not right border column and not bottom border row
+                        ret.vtxNormals[vi] += t1n;
+                    if (x > 0 && y < meshHeight) // not left column and not bottom border row
+                        ret.vtxNormals[vi - 1] += t1n;
+
+                    Vector3 pt21 = vtxMap[new Vector2(x - vtxStride, y - vtxStride)];
+                    Vector3 pt22 = vtxMap[new Vector2(x, y)];
+                    Vector3 pt23 = vtxMap[new Vector2(x, y - vtxStride)];
+                    Vector3 t2n = TriangleNormal(pt21, pt22, pt23);
+                    if (y > 0 && x > 0) // not top row and not left column
+                        ret.vtxNormals[vi - vtxPerLine - 1] += t1n;
+                    if (y > 0 && x < meshWidth) // not top row  and not right border column
+                    {
+                        // Debug.Log(string.Format("x={0}, y={1}, vi={2}", x, y, vi));
+                        ret.vtxNormals[vi - vtxPerLine] += t1n;
+                    }
+                    if (x < meshWidth && y < meshHeight) // not right border column and not bottom border row
+                        ret.vtxNormals[vi] += t1n;
                 }
 
-                vi++;
+                if (x >= 0 && x < meshWidth && y >= 0 && y < meshHeight)
+                {
+                    //main mesh vtx
+                    ret.meshVertices[vi] = vtxMap[new Vector2(x, y)];
+                    ret.meshUVs[vi] = new Vector2(topLeftU + (float)x / (fullMapWidth - 1f), topLeftV + (float)y / (fullMapHeight - 1f));
+                    vi++;
+                }
+
             }
         }
 
-        ret.BakeNormals();
+        for (int i = 0; i < vi; i++)
+        {
+            ret.vtxNormals[i].Normalize();
+        }
 
         return ret;
+    }
+
+    Vector3 TriangleNormal(Vector3 va, Vector3 vb, Vector3 vc)
+    {
+        Vector3 dab = vb - va;
+        Vector3 dac = vc - va;
+        return Vector3.Cross(dab, dac).normalized;
     }
 
 
@@ -374,54 +423,14 @@ public struct TerrainChunkMeshData
     public Vector3[] meshVertices;
     public int[] meshTriangles;
     public Vector2[] meshUVs;
-    public Vector3[] bakedNormals;
+    public Vector3[] vtxNormals;
 
     public TerrainChunkMeshData(int meshWidth, int meshHeight)
     {
         meshVertices = new Vector3[meshWidth * meshHeight];
         meshUVs = new Vector2[meshWidth * meshHeight];
         meshTriangles = new int[(meshWidth - 1) * (meshHeight - 1) * 6];
-        bakedNormals = null;
-    }
-
-    Vector3[] CalculateNormals()
-    {
-        Vector3[] ret = new Vector3[meshVertices.Length];
-
-        for (int ti = 0; ti < meshTriangles.Length; ti += 3)
-        {
-            int a = meshTriangles[ti];
-            int b = meshTriangles[ti + 1];
-            int c = meshTriangles[ti + 2];
-            Vector3 triNormal = TriangleNormal(a, b, c);
-
-            ret[a] += triNormal;
-            ret[b] += triNormal;
-            ret[c] += triNormal;
-        }
-
-        foreach (Vector3 v in ret)
-        {
-            v.Normalize();
-        }
-
-        return ret;
-    }
-
-    Vector3 TriangleNormal(int a, int b, int c)
-    {
-        Vector3 va = meshVertices[a];
-        Vector3 vb = meshVertices[b];
-        Vector3 vc = meshVertices[c];
-
-        Vector3 dab = vb - va;
-        Vector3 dac = vc - va;
-        return Vector3.Cross(dab, dac).normalized;
-    }
-
-    public void BakeNormals()
-    {
-        bakedNormals = CalculateNormals();
+        vtxNormals = new Vector3[meshVertices.Length];
     }
 
     public Mesh CreateMesh()
@@ -430,7 +439,7 @@ public struct TerrainChunkMeshData
         mesh.vertices = meshVertices;
         mesh.triangles = meshTriangles;
         mesh.uv = meshUVs;
-        mesh.normals = bakedNormals;
+        mesh.normals = vtxNormals;
         return mesh;
     }
 }
@@ -474,7 +483,7 @@ public struct TerrainChunkHeightData
 
         Texture2D texture = new Texture2D(width, height);
 
-        texture.wrapMode = TextureWrapMode.Clamp;
+        texture.wrapMode = TextureWrapMode.Clamp; // this shouldn't matter, since UV staying away from border
         texture.SetPixels(colorMap);
         texture.Apply();
 

@@ -65,7 +65,7 @@ public class EndlessTerrain : MonoBehaviour
         float y = rngesus.Next(-randomOffsetRange, randomOffsetRange) + coord.y / 0.72f;
         float noiseVal = Mathf.PerlinNoise(x, y);
         int bidx = Mathf.RoundToInt(noiseVal * 1000f * biomes.Length) % biomes.Length;
-        Debug.Log(coord + " " + x + " " + y + " " + noiseVal + " " + bidx);
+        // Debug.Log(coord + " " + x + " " + y + " " + noiseVal + " " + bidx);
         return biomes[bidx];
     }
 
@@ -136,7 +136,6 @@ public class EndlessTerrain : MonoBehaviour
         int previousLOD = -1;
         bool heightMapReceived = false;
         TerrainChunkHeightData terrainChunkHeightData;
-        bool lastViewable = false;
 
         public TerrainChunkGameObject(Vector2 coord, int size, Transform parent, Biome biome, Dictionary<Vector2, Biome> neighborBiomes, LODThreshInfo[] detailLevels)
         {
@@ -247,11 +246,7 @@ public class EndlessTerrain : MonoBehaviour
                 chunksVisibleLastUpdate.Add(this);
             }
 
-            // if (viewable != lastViewable)
-            // {
-            // lastViewable = viewable;
             SetVisible(viewable);
-            // }
         }
 
         public void SetVisible(bool visible)

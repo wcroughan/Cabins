@@ -8,7 +8,7 @@ public class TerrainDisplay : MonoBehaviour
     public bool autoUpdate;
     [SerializeField]
     Vector2 coord;
-    [SerializeField, Range(0, 6)]
+    [SerializeField, Range(0, 4)]
     int levelOfDetail;
     [SerializeField]
     public Biome centerBiome, borderBiomeX, borderBiomeY, borderBiomeCorner;
@@ -75,7 +75,7 @@ public class TerrainDisplay : MonoBehaviour
         filter.sharedMesh = tc.CreateMesh();
 
         MeshRenderer renderer = GetComponent<MeshRenderer>();
-        renderer.sharedMaterial.mainTexture = terrainChunkHeightData.CreateTexture();
+        renderer.material.mainTexture = terrainChunkHeightData.CreateTexture();
     }
 
 }

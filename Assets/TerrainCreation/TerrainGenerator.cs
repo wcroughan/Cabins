@@ -469,7 +469,7 @@ public struct TerrainChunkHeightData
         colorMap = new Color[width * height];
         for (int x = 0; x < width; x++)
         {
-            for (int y = 0; y < width; y++)
+            for (int y = 0; y < height; y++)
             {
                 colorMap[x + y * width] = gradient_ThreadSafe.Evaluate(heightMap[x, y] / biome.heightMultiplier);
             }

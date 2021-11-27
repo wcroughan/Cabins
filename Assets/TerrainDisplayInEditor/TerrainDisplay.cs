@@ -21,25 +21,28 @@ public class TerrainDisplay : MonoBehaviour
 
     void OnValidate()
     {
-        if (centerBiome != null)
+        if (gameObject.activeSelf)
         {
-            centerBiome.OnValuesUpdated -= OnValuesUpdated;
-            centerBiome.OnValuesUpdated += OnValuesUpdated;
-        }
-        if (borderBiomeX != null)
-        {
-            borderBiomeX.OnValuesUpdated -= OnValuesUpdated;
-            borderBiomeX.OnValuesUpdated += OnValuesUpdated;
-        }
-        if (borderBiomeY != null)
-        {
-            borderBiomeY.OnValuesUpdated -= OnValuesUpdated;
-            borderBiomeY.OnValuesUpdated += OnValuesUpdated;
-        }
-        if (borderBiomeCorner != null)
-        {
-            borderBiomeCorner.OnValuesUpdated -= OnValuesUpdated;
-            borderBiomeCorner.OnValuesUpdated += OnValuesUpdated;
+            if (centerBiome != null)
+            {
+                centerBiome.OnValuesUpdated -= OnValuesUpdated;
+                centerBiome.OnValuesUpdated += OnValuesUpdated;
+            }
+            if (borderBiomeX != null)
+            {
+                borderBiomeX.OnValuesUpdated -= OnValuesUpdated;
+                borderBiomeX.OnValuesUpdated += OnValuesUpdated;
+            }
+            if (borderBiomeY != null)
+            {
+                borderBiomeY.OnValuesUpdated -= OnValuesUpdated;
+                borderBiomeY.OnValuesUpdated += OnValuesUpdated;
+            }
+            if (borderBiomeCorner != null)
+            {
+                borderBiomeCorner.OnValuesUpdated -= OnValuesUpdated;
+                borderBiomeCorner.OnValuesUpdated += OnValuesUpdated;
+            }
         }
     }
 

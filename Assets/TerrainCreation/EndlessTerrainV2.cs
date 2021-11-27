@@ -20,8 +20,6 @@ public class EndlessTerrainV2 : MonoBehaviour
     Dictionary<Vector2, TerrainChunk> terrainChunks;
     List<TerrainChunk> terrainChunksViewableLastUpdate;
 
-    Queue<(MeshCollider meshCollider, Mesh mesh)> bakedColliderMeshReturnQueue = new Queue<(MeshCollider meshCollider, Mesh mesh)>();
-
     public static Vector2 viewerPosition;
     Vector2 oldViewerPosition_viewing, oldViewerPosition_colliding;
     public const float viewerMoveThreshForViewableUpdate = 25f;
@@ -37,8 +35,9 @@ public class EndlessTerrainV2 : MonoBehaviour
     public const float chunkCreateDistance_sq = chunkCreateDistance * chunkCreateDistance;
 
     [SerializeField]
-    LODThreshInfo[] lodInfos { get; }
+    LODThreshInfo[] lodInfos;
     public static LODThreshInfo[] lodInfos_static;
+
     [SerializeField]
     int colliderLOD;
     public static int colliderLOD_static;
@@ -69,7 +68,21 @@ public class EndlessTerrainV2 : MonoBehaviour
         }
         if (colliderEnableDistance > colliderRequestDistance)
         {
+#pragma warning disable CS0162
             Debug.LogAssertion("Requesting colliders too late");
+#pragma warning restore CS0162
+        }
+
+        for (int i = 0; i < lodInfos.Length - 1; i++)
+        {
+            if (lodInfos[i].lod >= lodInfos[i + 1].lod)
+            {
+                Debug.LogAssertion("LODs are out of order");
+            }
+            if (lodInfos[i].distThresh >= lodInfos[i + 1].distThresh)
+            {
+                Debug.LogAssertion("LOD distances are out of order");
+            }
         }
     }
 
@@ -93,18 +106,6 @@ public class EndlessTerrainV2 : MonoBehaviour
         //terrain chunks contain info about large map portions, including biome map and height map
         //When putting features like trees in the map, chunks will also have info for those so mesh can be generated
         //terrain sections are smaller, and contain various levels of detail meshes
-
-        //ON UPDATE:
-        //first first, check queues for returned baked meshes and apply, then other queues also
-        //!!!!!!!
-        //Actually should just do this in main thread from terrain generator class
-        for (int i = 0; i < bakedColliderMeshReturnQueue.Count; i++)
-        {
-            var bakedMesh = bakedColliderMeshReturnQueue.Dequeue();
-            bakedMesh.meshCollider.sharedMesh = bakedMesh.mesh;
-        }
-        //OTHER queues?
-
 
         viewerPosition = new Vector2(viewer.position.x, viewer.position.z);
 
@@ -171,6 +172,7 @@ public class EndlessTerrainV2 : MonoBehaviour
         }
     }
 
+    [System.Serializable]
     public struct LODThreshInfo
     {
         public int lod;
@@ -210,7 +212,7 @@ public class TerrainChunk
             }
         }
 
-        EndlessTerrainV2.terrainGenerator.RequestNewChunkData(OnNewChunkDataReceived, coord);
+        EndlessTerrainV2.terrainGenerator.RequestNewChunkData(OnNewChunkDataReceived, centerLocation, EndlessTerrainV2.chunkSideLength);
     }
 
     private void OnNewChunkDataReceived(TerrainChunkData terrainChunkData)
@@ -219,7 +221,6 @@ public class TerrainChunk
         {
             terrainSection.terrainChunkData = terrainChunkData;
             terrainSection.terrainChunkDataAvailable = true;
-            //also set other things here that should be stored in each section. What needs to be passed to gnerator to make mesh?
         }
     }
 
@@ -282,17 +283,17 @@ public class TerrainChunk
             }
             anyViewable = true;
 
-            int lod = -1;
+            int lodi = -1;
             for (int i = 0; i < EndlessTerrainV2.lodInfos_static.Length; i++)
             {
                 if (EndlessTerrainV2.lodInfos_static[i].distThresh * EndlessTerrainV2.lodInfos_static[i].distThresh > sd)
                 {
-                    lod = EndlessTerrainV2.lodInfos_static[i].lod;
+                    lodi = i;
                     break;
                 }
             }
             //lod should never be -1 at this point!
-            terrainSection.SetViewable(lod);
+            terrainSection.SetViewable(lodi);
         }
     }
 
@@ -312,6 +313,8 @@ public class TerrainChunk
                     RequestMesh(currentLOD);
             }
         }
+        private bool viewable = false;
+
         public Vector2 centerLocation;
 
         private GameObject meshObject;
@@ -328,13 +331,17 @@ public class TerrainChunk
         private bool requestedColliderMesh => requestedMeshLOD[EndlessTerrainV2.colliderLOD_static];
         private bool waitingOnColliderMesh = false;
 
+        private Vector2 sectionCoord;
+
         public TerrainSection(Vector2 chunkCoord, Vector2 sectionCoord, Transform parent)
         {
             this.centerLocation = (chunkCoord - 0.5f * Vector2.one) * EndlessTerrainV2.chunkSideLength //bottom left of chunk
                                     + (sectionCoord + 0.5f * Vector2.one) * EndlessTerrainV2.sectionSideLength; //middle of this section
             Vector3 positionV3 = new Vector3(this.centerLocation.x, 0f, this.centerLocation.y);
+            this.sectionCoord = sectionCoord;
 
             meshObject = GameObject.Instantiate(EndlessTerrainV2.sectionPrefab, positionV3, Quaternion.identity);
+            meshObject.SetActive(false);
             meshObject.name = "Section " + chunkCoord + ", " + sectionCoord;
             meshRenderer = meshObject.GetComponent<MeshRenderer>();
             meshFilter = meshObject.GetComponent<MeshFilter>();
@@ -369,13 +376,30 @@ public class TerrainChunk
             RequestMesh(EndlessTerrainV2.colliderLOD_static);
         }
 
-        public void SetInvisible() { }
-        public void SetViewable(int lod)
+        public void SetInvisible()
         {
+            viewable = false;
+            meshObject.SetActive(false);
+        }
+        public void SetViewable(int lodInfoIndex)
+        {
+            viewable = true;
+            int lod = EndlessTerrainV2.lodInfos_static[lodInfoIndex].lod;
             currentLOD = lod;
-            //if has mesh, set it
-            //otherwise call RequestMesh
-            //If lod > 0, make sure the next level down LOD mesh is requested (but possibly not just lod - 1 cause might skip some?)
+            if (hasMeshLOD[lod])
+            {
+                meshObject.SetActive(true);
+                meshFilter.mesh = meshes[lod];
+            }
+            else if (!requestedMeshLOD[lod])
+            {
+                RequestMesh(lod);
+            }
+
+            if (lodInfoIndex > 0 && !requestedMeshLOD[EndlessTerrainV2.lodInfos_static[lodInfoIndex - 1].lod])
+            {
+                RequestMesh(EndlessTerrainV2.lodInfos_static[lodInfoIndex - 1].lod);
+            }
         }
 
         private void RequestMesh(int lod)
@@ -393,7 +417,7 @@ public class TerrainChunk
             else if (!requestedMeshLOD[lod])
             {
                 requestedMeshLOD[lod] = true;
-                EndlessTerrainV2.terrainGenerator.RequestSectionMesh(OnMeshDataReceived, terrainChunkData, lod);
+                EndlessTerrainV2.terrainGenerator.RequestSectionMesh(OnMeshDataReceived, terrainChunkData, sectionCoord, EndlessTerrainV2.sectionSideLength, lod);
             }
 
         }
@@ -404,10 +428,13 @@ public class TerrainChunk
             if (terrainSectionMeshData.LOD == currentLOD)
             {
                 meshFilter.mesh = meshes[terrainSectionMeshData.LOD];
+                if (viewable)
+                {
+                    meshObject.SetActive(true);
+                }
             }
             if (terrainSectionMeshData.LOD == EndlessTerrainV2.colliderLOD_static)
             {
-                //request mesh bake
                 EndlessTerrainV2.terrainGenerator.RequestSectionMeshBake(OnMeshBakeReceived, meshes[terrainSectionMeshData.LOD].GetInstanceID());
             }
         }

@@ -12,6 +12,7 @@ public class TerrainGeneratorV2 : MonoBehaviour
     [SerializeField]
     float biomeMapNoiseScale = 0.1f;
     [SerializeField]
+    BiomeSelector biomesInfo;
     Biome[] biomes;
     public const int randomOffsetRange = 100000;
     public const int LOD_MAX = 4;
@@ -25,16 +26,15 @@ public class TerrainGeneratorV2 : MonoBehaviour
     void OnValidate()
     {
         randomSeed = seed;
+        biomesInfo.LoadRemapValues();
+        biomes = biomesInfo.GetAllBiomes();
     }
 
     void Start()
     {
         randomSeed = seed;
-    }
-
-    private int GetBiomeFromSelectionValues(float v1, float v2)
-    {
-        return v1 > v2 ? 0 : 1;
+        biomesInfo.LoadRemapValues();
+        biomes = biomesInfo.GetAllBiomes();
     }
 
     private int[,] GenerateChunkBiomeMap(Vector2 chunkCenter, int dim)
@@ -64,7 +64,11 @@ public class TerrainGeneratorV2 : MonoBehaviour
                 float v1 = Mathf.PerlinNoise(sampX1, sampY1);
                 float v2 = Mathf.PerlinNoise(sampX2, sampY2);
 
-                ret[x, y] = GetBiomeFromSelectionValues(v1, v2);
+                ret[x, y] = biomesInfo.GetBiomeForVals(Mathf.Clamp01(v1), Mathf.Clamp01(v2));
+                if (ret[x, y] == -1)
+                {
+                    ret[x, y] = 0;
+                }
             }
 
         }
@@ -133,11 +137,19 @@ public class TerrainGeneratorV2 : MonoBehaviour
 
     private TerrainSectionMeshData GenerateTerrainSectionMeshData(TerrainChunkData terrainChunkData, Vector2 sectionCoord, int sectionSize, int levelOfDetail)
     {
+        int vtxStride = levelOfDetail == 0 ? 1 : 2 * levelOfDetail;
+        if (sectionSize % vtxStride != 0)
+        {
+            Debug.LogAssertion("Level of detail incompatible with section size");
+            throw new Exception();
+        }
+        int vtxPerLine = (sectionSize / vtxStride) + 1;
+
         TerrainSectionMeshData ret = new TerrainSectionMeshData();
         ret.LOD = levelOfDetail;
-        int dim = sectionSize + 1;
-        ret.vertices = new Vector3[dim * dim];
-        ret.UVs = new Vector2[dim * dim];
+
+        ret.vertices = new Vector3[vtxPerLine * vtxPerLine];
+        ret.UVs = new Vector2[vtxPerLine * vtxPerLine];
         ret.triangles = new int[6 * sectionSize * sectionSize];
 
         int xi0 = terrainChunkData.numMarginPts + Mathf.RoundToInt(sectionCoord.x) * sectionSize;
@@ -145,23 +157,31 @@ public class TerrainGeneratorV2 : MonoBehaviour
         float xoffset = terrainChunkData.chunkCenter.x - (float)terrainChunkData.chunkSideLength / 2f + sectionCoord.x * sectionSize;
         float yoffset = terrainChunkData.chunkCenter.y - (float)terrainChunkData.chunkSideLength / 2f + sectionCoord.y * sectionSize;
 
+        float fullUVWidth = terrainChunkData.heightMap.GetLength(0) - 1;
+        float xUV0 = (float)xi0 / fullUVWidth;
+        float fullUVHeight = terrainChunkData.heightMap.GetLength(1) - 1;
+        float yUV0 = (float)yi0 / fullUVHeight;
+
         int tridx = 0;
-        for (int y = 0; y < dim; y++)
+        int vi = 0;
+        for (int y = 0; y < sectionSize + 1; y += vtxStride)
         {
-            for (int x = 0; x < dim; x++)
+            for (int x = 0; x < sectionSize + 1; x += vtxStride)
             {
-                int vi = x + y * dim;
-                ret.vertices[vi] = new Vector3(xoffset + x, terrainChunkData.heightMap[xi0 + x, yi0 + y], yoffset + y);
-                ret.UVs[vi] = new Vector2((float)x / (dim - 1f), (float)y / (dim - 1f));
+                float z = terrainChunkData.heightMap[xi0 + x, yi0 + y];
+                ret.vertices[vi] = new Vector3(xoffset + x, z, yoffset + y);
+                ret.UVs[vi] = new Vector2((float)x / fullUVWidth + xUV0, (float)y / fullUVHeight + yUV0);
                 if (x > 0 && y > 0)
                 {
-                    ret.triangles[tridx++] = vi - dim - 1;
+                    ret.triangles[tridx++] = vi - vtxPerLine - 1;
                     ret.triangles[tridx++] = vi;
-                    ret.triangles[tridx++] = vi - dim;
-                    ret.triangles[tridx++] = vi - dim - 1;
+                    ret.triangles[tridx++] = vi - vtxPerLine;
+                    ret.triangles[tridx++] = vi - vtxPerLine - 1;
                     ret.triangles[tridx++] = vi - 1;
                     ret.triangles[tridx++] = vi;
                 }
+
+                vi++;
             }
         }
 
@@ -275,6 +295,76 @@ public class TerrainGeneratorV2 : MonoBehaviour
         {
             this.callback = callback;
             this.parameter = parameter;
+        }
+    }
+
+    [System.Serializable]
+    struct BiomeSelector
+    {
+        [SerializeField]
+        Texture2D biomeValueMap;
+        [SerializeField]
+        BiomeKeyEntry[] mapKeys;
+        [SerializeField]
+        TextAsset perlinRemapTextFile;
+
+        private float[] remapValues;
+
+        private int numPrintedWarnings;
+
+        public void LoadRemapValues()
+        {
+            string remapTxt = perlinRemapTextFile.text;
+            string[] lines = remapTxt.Split('\n');
+            remapValues = new float[lines.Length];
+            for (int i = 0; i < lines.Length; i++)
+            {
+                if (lines[i].Equals(""))
+                    break;
+                remapValues[i] = float.Parse(lines[i], System.Globalization.NumberStyles.Float | System.Globalization.NumberStyles.AllowExponent);
+            }
+
+            numPrintedWarnings = 0;
+        }
+
+        public int GetBiomeForVals(float v1, float v2)
+        {
+            float rv1 = remapValues[Mathf.RoundToInt(v1 * (remapValues.Length - 1))];
+            float rv2 = remapValues[Mathf.RoundToInt(v2 * (remapValues.Length - 1))];
+            int x = Mathf.RoundToInt(rv1 * biomeValueMap.width);
+            int y = Mathf.RoundToInt(rv2 * biomeValueMap.height);
+            Color c = biomeValueMap.GetPixel(x, y);
+            int cval = Mathf.RoundToInt(c.r * 255);
+            // int cval = v1 > v2 ? 0 : 1;
+            for (int i = 0; i < mapKeys.Length; i++)
+            {
+                if (mapKeys[i].colorVal == cval)
+                    return i;
+            }
+
+
+            if (numPrintedWarnings++ < 10)
+                Debug.LogWarning(string.Format("Couldn't get biome: v1={0}, v2={1}, rv1={2}, rv2={3}, c={4}, cval={5}", v1, v2, rv1, rv2, c, cval));
+
+            return -1;
+        }
+
+        public Biome[] GetAllBiomes()
+        {
+            Biome[] ret = new Biome[mapKeys.Length];
+
+            for (int i = 0; i < mapKeys.Length; i++)
+                ret[i] = mapKeys[i].biome;
+
+            return ret;
+        }
+
+
+        [System.Serializable]
+        struct BiomeKeyEntry
+        {
+            public int colorVal;
+            public Biome biome;
         }
     }
 }

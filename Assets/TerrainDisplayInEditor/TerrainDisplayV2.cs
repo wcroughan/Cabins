@@ -13,7 +13,7 @@ public class TerrainDisplayV2 : MonoBehaviour
     Vector2 coord;
     [SerializeField, Range(TerrainGeneratorV2.LOD_MIN, TerrainGeneratorV2.LOD_MAX)]
     int levelOfDetail;
-    [SerializeField]
+    [SerializeField, Range(1, 4)]
     int sectionSize;
     [SerializeField]
     int numChunksPerSide;
@@ -29,7 +29,7 @@ public class TerrainDisplayV2 : MonoBehaviour
     void Update()
     {
         numSectionsPerDim = Mathf.RoundToInt(Mathf.Pow(2f, chunkSectionSubdivisions));
-        chunkSize = numSectionsPerDim * sectionSize;
+        chunkSize = numSectionsPerDim * 24 * sectionSize;
         terrainGenerator = FindObjectOfType<TerrainGeneratorV2>();
     }
 
@@ -73,7 +73,6 @@ public class TerrainDisplayV2 : MonoBehaviour
 
     private void OnTerrainSectionMeshReceived(TerrainSectionMeshData terrainSectionMeshData)
     {
-        Debug.Log("Creating a game object");
         GameObject g = Instantiate(sectionPrefab, transform.position, Quaternion.identity);
         g.tag = "TerrainDisplay";
         g.transform.SetParent(transform, true);

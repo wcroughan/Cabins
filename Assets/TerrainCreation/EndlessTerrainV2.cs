@@ -310,7 +310,9 @@ public class TerrainChunk
             {
                 _heightMapAvailable = value;
                 if (waitingOnHeightMap)
+                {
                     RequestMesh(currentLOD);
+                }
             }
         }
         private bool viewable = false;

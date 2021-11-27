@@ -9,11 +9,12 @@ public class TerrainGeneratorV2 : MonoBehaviour
     [SerializeField]
     int seed;
     public static int randomSeed;
-    [SerializeField]
-    float biomeMapNoiseScale = 0.1f;
+    [SerializeField, Range(-10, -5)]
+    float biomeMapNoiseScaleFactor = -6f;
+    float biomeMapNoiseScale;
     [SerializeField]
     BiomeSelector biomesInfo;
-    Biome[] biomes;
+    public static Biome[] biomes;
     public const int randomOffsetRange = 100000;
     public const int LOD_MAX = 4;
     public const int LOD_MIN = 0;
@@ -25,6 +26,7 @@ public class TerrainGeneratorV2 : MonoBehaviour
 
     void OnValidate()
     {
+        biomeMapNoiseScale = Mathf.Exp(biomeMapNoiseScaleFactor);
         randomSeed = seed;
         biomesInfo.LoadRemapValues();
         biomes = biomesInfo.GetAllBiomes();
@@ -32,6 +34,7 @@ public class TerrainGeneratorV2 : MonoBehaviour
 
     void Start()
     {
+        biomeMapNoiseScale = Mathf.Exp(biomeMapNoiseScaleFactor);
         randomSeed = seed;
         biomesInfo.LoadRemapValues();
         biomes = biomesInfo.GetAllBiomes();
@@ -78,12 +81,8 @@ public class TerrainGeneratorV2 : MonoBehaviour
 
     private TerrainChunkData GenerateNewTerrainChunkData(Vector2 chunkCenter, int chunkSideLength)
     {
-        TerrainChunkData ret = new TerrainChunkData();
-        ret.chunkCenter = chunkCenter;
-        ret.chunkSideLength = chunkSideLength;
-        ret.numMarginPts = 5;
-
-        int dim = chunkSideLength + 1 + 2 * ret.numMarginPts;
+        int numMarginPts = 5;
+        int dim = chunkSideLength + 1 + 2 * numMarginPts;
 
         int[,] chunkBiomeMap = GenerateChunkBiomeMap(chunkCenter, dim);
 
@@ -121,17 +120,17 @@ public class TerrainGeneratorV2 : MonoBehaviour
             z = nextz;
         }
 
-        ret.heightMap = new float[dim, dim];
+        float[,] heightMap = new float[dim, dim];
         for (int x = 0; x < dim; x++)
         {
             for (int y = 0; y < dim; y++)
             {
                 int ahmi = heightMapIndexForBiomeIndex[chunkBiomeMap[x, y]];
-                ret.heightMap[x, y] = allHeightMaps[x, y, ahmi];
+                heightMap[x, y] = allHeightMaps[x, y, ahmi];
             }
         }
 
-        return ret;
+        return new TerrainChunkData(heightMap, chunkBiomeMap, chunkSideLength, numMarginPts, chunkCenter);
     }
 
 
@@ -307,6 +306,11 @@ public class TerrainGeneratorV2 : MonoBehaviour
         BiomeKeyEntry[] mapKeys;
         [SerializeField]
         TextAsset perlinRemapTextFile;
+        [SerializeField]
+        bool overrideMapWithValue;
+        [SerializeField]
+        int overrideValue;
+
 
         private float[] remapValues;
 
@@ -329,6 +333,9 @@ public class TerrainGeneratorV2 : MonoBehaviour
 
         public int GetBiomeForVals(float v1, float v2)
         {
+            if (overrideMapWithValue)
+                return overrideValue;
+
             float rv1 = remapValues[Mathf.RoundToInt(v1 * (remapValues.Length - 1))];
             float rv2 = remapValues[Mathf.RoundToInt(v2 * (remapValues.Length - 1))];
             int x = Mathf.RoundToInt(rv1 * biomeValueMap.width);
@@ -372,9 +379,62 @@ public class TerrainGeneratorV2 : MonoBehaviour
 public struct TerrainChunkData
 {
     public float[,] heightMap;
+    public int[,] biomeMap;
     public int chunkSideLength;
     public int numMarginPts;
     public Vector2 chunkCenter;
+
+    private bool textureCreated;
+    private Texture2D texture;
+    private Color[] colorMap;
+
+    public TerrainChunkData(float[,] heightMap, int[,] biomeMap, int chunkSideLength, int numMarginPts, Vector2 chunkCenter)
+    {
+        this.heightMap = heightMap;
+        this.biomeMap = biomeMap;
+        this.chunkSideLength = chunkSideLength;
+        this.numMarginPts = numMarginPts;
+        this.chunkCenter = chunkCenter;
+        textureCreated = false;
+        texture = null;
+
+        int width = heightMap.GetLength(0);
+        int height = heightMap.GetLength(1);
+        colorMap = new Color[width * height];
+
+        //copying gradients to new ones for thread safety
+        Gradient[] gradients = new Gradient[TerrainGeneratorV2.biomes.Length];
+        for (int i = 0; i < gradients.Length; i++)
+        {
+            gradients[i] = new Gradient();
+            gradients[i].SetKeys(TerrainGeneratorV2.biomes[i].gradient.colorKeys, TerrainGeneratorV2.biomes[i].gradient.alphaKeys);
+        }
+
+        for (int x = 0; x < width; x++)
+        {
+            for (int y = 0; y < height; y++)
+            {
+                colorMap[x + y * width] = gradients[biomeMap[x, y]].Evaluate(heightMap[x, y] / TerrainGeneratorV2.biomes[biomeMap[x, y]].heightMultiplier);
+            }
+        }
+    }
+
+    public Texture2D GetTexture()
+    {
+        if (!textureCreated)
+        {
+            int width = heightMap.GetLength(0);
+            int height = heightMap.GetLength(1);
+
+            texture = new Texture2D(width, height);
+            texture.wrapMode = TextureWrapMode.Clamp; // this shouldn't matter, since UV staying away from border
+            texture.SetPixels(colorMap);
+            texture.Apply();
+
+            textureCreated = true;
+        }
+        return texture;
+    }
 }
 
 public struct TerrainSectionMeshData

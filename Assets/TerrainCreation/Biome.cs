@@ -2,7 +2,7 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
-[CreateAssetMenu()]
+[CreateAssetMenu(menuName = "Biomes/Biome")]
 public class Biome : UpdatableTerrainInfo
 {
     [SerializeField, Range(1, 5)]
@@ -21,16 +21,10 @@ public class Biome : UpdatableTerrainInfo
     public Gradient gradient;
     public virtual int heightMapFillOrder => 1;
 
-    protected override void OnValidate()
-    {
-        base.OnValidate();
-    }
-
     public Color GetColorForHeight(float h)
     {
         return gradient.Evaluate(h / heightMultiplier);
     }
-
 
     // Fill in heightMap[x,y,idx] with height values wherever mask[x,y] is true.
     // May also fill in where mask is false, but not guaranteed

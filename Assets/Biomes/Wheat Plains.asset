@@ -1,0 +1,73 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 3068b3e3fc3f632fbbdc32d6484f2288, type: 3}
+  m_Name: Wheat Plains
+  m_EditorClassIdentifier: 
+  autoUpdate: 1
+  numNoiseScales: 2
+  baseNoiseScale: -4.5
+  scaleFalloff: 1
+  scaleScalingFactor: 3.75
+  heightCurve:
+    serializedVersion: 2
+    m_Curve:
+    - serializedVersion: 3
+      time: 0
+      value: 0
+      inSlope: 1
+      outSlope: 1
+      tangentMode: 34
+      weightedMode: 0
+      inWeight: 0
+      outWeight: 0.33333334
+    - serializedVersion: 3
+      time: 1
+      value: 1
+      inSlope: 1
+      outSlope: 1
+      tangentMode: 34
+      weightedMode: 0
+      inWeight: 0.33333334
+      outWeight: 0
+    m_PreInfinity: 2
+    m_PostInfinity: 2
+    m_RotationOrder: 4
+  heightMultiplier: 25
+  gradient:
+    serializedVersion: 2
+    key0: {r: 0.6792453, g: 0.573324, b: 0.03524386, a: 1}
+    key1: {r: 0.6698113, g: 0.5421527, b: 0.06634923, a: 1}
+    key2: {r: 0.003921747, g: 1, b: 0, a: 0}
+    key3: {r: 0.003921747, g: 1, b: 0, a: 0}
+    key4: {r: 0.3962264, g: 0.3139112, b: 0.26726592, a: 0}
+    key5: {r: 0.4245283, g: 0.16792327, b: 0.010012458, a: 0}
+    key6: {r: 1, g: 1, b: 1, a: 0}
+    key7: {r: 1, g: 1, b: 1, a: 0}
+    ctime0: 0
+    ctime1: 21588
+    ctime2: 18890
+    ctime3: 18890
+    ctime4: 42983
+    ctime5: 47802
+    ctime6: 49344
+    ctime7: 49344
+    atime0: 0
+    atime1: 65535
+    atime2: 0
+    atime3: 0
+    atime4: 0
+    atime5: 0
+    atime6: 0
+    atime7: 0
+    m_Mode: 0
+    m_NumColorKeys: 2
+    m_NumAlphaKeys: 2

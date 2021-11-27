@@ -66,17 +66,22 @@ public class TerrainDisplayV2 : MonoBehaviour
         {
             for (int y = 0; y < numSectionsPerDim; y++)
             {
-                terrainGenerator.RequestSectionMesh(OnTerrainSectionMeshReceived, terrainChunkData, new Vector2(x, y), chunkSize / numSectionsPerDim, levelOfDetail);
+                terrainGenerator.RequestSectionMesh(tsmd => OnTerrainSectionMeshReceived(tsmd, terrainChunkData), terrainChunkData, new Vector2(x, y), chunkSize / numSectionsPerDim, levelOfDetail);
             }
         }
     }
 
-    private void OnTerrainSectionMeshReceived(TerrainSectionMeshData terrainSectionMeshData)
+    private void OnTerrainSectionMeshReceived(TerrainSectionMeshData terrainSectionMeshData, TerrainChunkData terrainChunkData)
     {
         GameObject g = Instantiate(sectionPrefab, transform.position, Quaternion.identity);
         g.tag = "TerrainDisplay";
         g.transform.SetParent(transform, true);
         g.GetComponent<MeshFilter>().mesh = terrainSectionMeshData.CreateMesh();
+        MeshRenderer meshRenderer = g.GetComponent<MeshRenderer>();
+        // meshRenderer.sharedMaterial.mainTexture = terrainChunkData.GetTexture();
+        Material sm = new Material(meshRenderer.sharedMaterial);
+        sm.mainTexture = terrainChunkData.GetTexture();
+        meshRenderer.sharedMaterial = sm;
     }
 
 }

@@ -1,0 +1,118 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 3068b3e3fc3f632fbbdc32d6484f2288, type: 3}
+  m_Name: Alien
+  m_EditorClassIdentifier: 
+  autoUpdate: 1
+  numNoiseScales: 4
+  baseNoiseScale: -5.6
+  scaleFalloff: 0.93
+  scaleScalingFactor: 3.15
+  heightCurve:
+    serializedVersion: 2
+    m_Curve:
+    - serializedVersion: 3
+      time: 0
+      value: 0
+      inSlope: 3.8272314
+      outSlope: 3.8272314
+      tangentMode: 34
+      weightedMode: 0
+      inWeight: 0
+      outWeight: 0.33333334
+    - serializedVersion: 3
+      time: 0.057474002
+      value: 0.2199663
+      inSlope: 1.492628
+      outSlope: 1.492628
+      tangentMode: 34
+      weightedMode: 0
+      inWeight: 0.33333334
+      outWeight: 0.33333334
+    - serializedVersion: 3
+      time: 0.19268773
+      value: 0.10611966
+      inSlope: 3.4155097
+      outSlope: 3.4155097
+      tangentMode: 34
+      weightedMode: 0
+      inWeight: 0.33333334
+      outWeight: 0.33333334
+    - serializedVersion: 3
+      time: 0.24174994
+      value: 0.48257375
+      inSlope: 3.0116978
+      outSlope: 3.0116978
+      tangentMode: 34
+      weightedMode: 0
+      inWeight: 0.33333334
+      outWeight: 0.33333334
+    - serializedVersion: 3
+      time: 0.4226906
+      value: 0.18409413
+      inSlope: -0.7587695
+      outSlope: -0.7587695
+      tangentMode: 34
+      weightedMode: 0
+      inWeight: 0.33333334
+      outWeight: 0.33333334
+    - serializedVersion: 3
+      time: 0.71713424
+      value: 0.22297847
+      inSlope: 1.4395112
+      outSlope: 1.4395112
+      tangentMode: 34
+      weightedMode: 0
+      inWeight: 0.33333334
+      outWeight: 0.33333334
+    - serializedVersion: 3
+      time: 1
+      value: 1
+      inSlope: 2.746962
+      outSlope: 2.746962
+      tangentMode: 34
+      weightedMode: 0
+      inWeight: 0.33333334
+      outWeight: 0
+    m_PreInfinity: 2
+    m_PostInfinity: 2
+    m_RotationOrder: 4
+  heightMultiplier: 50
+  gradient:
+    serializedVersion: 2
+    key0: {r: 0.79250646, g: 0.096787095, b: 0.8207547, a: 1}
+    key1: {r: 0.41568628, g: 0.058823522, b: 0.07934819, a: 1}
+    key2: {r: 0.07971394, g: 1, b: 0, a: 0}
+    key3: {r: 0.41509432, g: 0.24334829, b: 0.06069775, a: 0}
+    key4: {r: 0.5849056, g: 0.3356342, b: 0.0744927, a: 0}
+    key5: {r: 0.5849056, g: 0.33563423, b: 0.07449269, a: 0}
+    key6: {r: 1, g: 1, b: 1, a: 0}
+    key7: {r: 1, g: 1, b: 1, a: 0}
+    ctime0: 2699
+    ctime1: 8674
+    ctime2: 39899
+    ctime3: 41441
+    ctime4: 30069
+    ctime5: 47417
+    ctime6: 49344
+    ctime7: 49344
+    atime0: 0
+    atime1: 65535
+    atime2: 0
+    atime3: 0
+    atime4: 0
+    atime5: 0
+    atime6: 0
+    atime7: 0
+    m_Mode: 0
+    m_NumColorKeys: 3
+    m_NumAlphaKeys: 2

@@ -154,7 +154,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   cameraPivot: {fileID: 525581859}
   cameraEndpoint: {fileID: 963194228}
-  cameraFollowSpeed: 1
+  cameraFollowSpeed: 0.1
   cameraRotateSpeed: 0.5
   minVertAngle: -35
   maxVertAngle: 35

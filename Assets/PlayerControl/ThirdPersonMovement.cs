@@ -5,7 +5,10 @@ using UnityEngine;
 public class ThirdPersonMovement : MonoBehaviour
 {
     InputActions inputActions;
-    Animator animator;
+    Animator wonkAnimator;
+    Animator planeAnimator;
+    GameObject wonkObject;
+    GameObject planeObject;
 
     Rigidbody rb;
     [SerializeField]
@@ -13,7 +16,7 @@ public class ThirdPersonMovement : MonoBehaviour
     [SerializeField]
     float jumpSpeed = 100f;
     [SerializeField]
-    float godModeVertSpeed = 10f;
+    float planeModeVertSpeed = 10f;
     [SerializeField]
     float sprintFactor = 1.5f;
     [SerializeField]
@@ -26,7 +29,7 @@ public class ThirdPersonMovement : MonoBehaviour
     float stoppedVelThresh;
     private float stoppedVelThresh_sq;
 
-    public bool godModeEnabled;
+    public bool planeModeEnabled;
     public bool shouldJump;
     public bool shouldCrouch;
     public bool sprintEnabled;
@@ -42,8 +45,8 @@ public class ThirdPersonMovement : MonoBehaviour
 
             inputActions.GameControl.Pause.performed += ctx => Debug.Break();
 
-            godModeEnabled = false;
-            inputActions.WorldMovement.ToggleFlying.performed += ctx => GodModePressed();
+            planeModeEnabled = false;
+            inputActions.WorldMovement.ToggleFlying.performed += ctx => PlaneModePressed();
 
             shouldCrouch = false;
             inputActions.WorldMovement.Crouch.performed += ctx => shouldCrouch = ctx.ReadValueAsButton();
@@ -64,11 +67,22 @@ public class ThirdPersonMovement : MonoBehaviour
         inputActions.Disable();
     }
 
-    void GodModePressed()
+    void PlaneModePressed()
     {
-        godModeEnabled = !godModeEnabled;
-        rb.useGravity = !godModeEnabled;
+        planeModeEnabled = !planeModeEnabled;
         shouldCrouch = false;
+        if (planeModeEnabled)
+        {
+            rb.useGravity = false;
+            wonkObject.SetActive(false);
+            planeObject.SetActive(true);
+        }
+        else
+        {
+            rb.useGravity = true;
+            wonkObject.SetActive(true);
+            planeObject.SetActive(false);
+        }
     }
 
     void Start()
@@ -78,7 +92,11 @@ public class ThirdPersonMovement : MonoBehaviour
         Cursor.lockState = CursorLockMode.Locked;
         rb = GetComponent<Rigidbody>();
         rb.velocity = new Vector3(0f, 0f, 0.1f);
-        animator = GetComponentInChildren<Animator>();
+
+        wonkObject = transform.Find("wonkyplayer").gameObject;
+        planeObject = transform.Find("planemodel").gameObject;
+        wonkAnimator = wonkObject.GetComponent<Animator>();
+        planeAnimator = planeObject.GetComponent<Animator>();
     }
 
 
@@ -94,12 +112,11 @@ public class ThirdPersonMovement : MonoBehaviour
         Vector3 movementDir = camdirForward * userMovement.y + camdirRight * userMovement.x;
         vel += movementDir * speed * (sprintEnabled ? sprintFactor : 1f);
 
-        if (godModeEnabled)
+        if (planeModeEnabled)
         {
-            // Debug.Log("In god mode");
             vel.y = 0;
-            vel.y += shouldJump ? godModeVertSpeed : 0;
-            vel.y += shouldCrouch ? -godModeVertSpeed : 0;
+            vel.y += shouldJump ? planeModeVertSpeed : 0;
+            vel.y += shouldCrouch ? -planeModeVertSpeed : 0;
         }
         else
         {
@@ -117,6 +134,7 @@ public class ThirdPersonMovement : MonoBehaviour
 
         float currentSpeed = (new Vector2(vel.x, vel.z)).magnitude;
         float speedPct = Mathf.Clamp01(Mathf.InverseLerp(0, 70, currentSpeed));
-        animator.SetFloat("SpeedPct", speedPct);
+        wonkAnimator.SetFloat("SpeedPct", speedPct);
+        planeAnimator.SetFloat("Blend", speedPct);
     }
 }

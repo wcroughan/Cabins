@@ -20,6 +20,11 @@ public class ThirdPersonMovement : MonoBehaviour
     Transform cam;
     [SerializeField]
     public Vector2 userMovement;
+    [SerializeField]
+    float maxTurnSpeed = 10;
+    [SerializeField]
+    float stoppedVelThresh;
+    private float stoppedVelThresh_sq;
 
     public bool godModeEnabled;
     public bool shouldJump;
@@ -68,6 +73,7 @@ public class ThirdPersonMovement : MonoBehaviour
 
     void Start()
     {
+        stoppedVelThresh_sq = stoppedVelThresh * stoppedVelThresh;
         // controller = GetComponent<CharacterController>();
         Cursor.lockState = CursorLockMode.Locked;
         rb = GetComponent<Rigidbody>();
@@ -88,7 +94,6 @@ public class ThirdPersonMovement : MonoBehaviour
         Vector3 movementDir = camdirForward * userMovement.y + camdirRight * userMovement.x;
         vel += movementDir * speed * (sprintEnabled ? sprintFactor : 1f);
 
-
         if (godModeEnabled)
         {
             // Debug.Log("In god mode");
@@ -107,8 +112,11 @@ public class ThirdPersonMovement : MonoBehaviour
 
         rb.velocity = vel;
 
+        if (rb.velocity.sqrMagnitude >= stoppedVelThresh_sq)
+            transform.rotation = Quaternion.RotateTowards(transform.rotation, Quaternion.LookRotation(camdirForward, Vector3.up), maxTurnSpeed);
+
         float currentSpeed = (new Vector2(vel.x, vel.z)).magnitude;
-        float speedPct = Mathf.Clamp01(Mathf.InverseLerp(0, 50, currentSpeed));
+        float speedPct = Mathf.Clamp01(Mathf.InverseLerp(0, 70, currentSpeed));
         animator.SetFloat("SpeedPct", speedPct);
     }
 }

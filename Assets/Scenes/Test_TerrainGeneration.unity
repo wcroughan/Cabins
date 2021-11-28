@@ -38,7 +38,7 @@ RenderSettings:
   m_ReflectionIntensity: 1
   m_CustomReflection: {fileID: 0}
   m_Sun: {fileID: 0}
-  m_IndirectSpecularColor: {r: 0.4465785, g: 0.49641252, b: 0.574817, a: 1}
+  m_IndirectSpecularColor: {r: 0.44657898, g: 0.4964133, b: 0.5748178, a: 1}
   m_UseRadianceAmbientProbe: 0
 --- !u!157 &3
 LightmapSettings:
@@ -332,9 +332,9 @@ MonoBehaviour:
   sectionPrefab: {fileID: 4451643203412476904, guid: f14aaeaa18c84c3dfa4c1a6b942cdd2e, type: 3}
   autoUpdate: 0
   coord: {x: 0, y: 0}
-  levelOfDetail: 2
+  levelOfDetail: 4
   sectionSize: 2
-  numChunksPerSide: 2
+  numChunksPerSide: 20
   chunkSectionSubdivisions: 2
 --- !u!114 &1891915099
 MonoBehaviour:
@@ -348,8 +348,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 0d08a659a55789437b9c4617a85790b8, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  seed: 100
-  biomeMapNoiseScaleFactor: -7.04
+  seed: 27
+  biomeMapNoiseScaleFactor: -7.95
   biomesInfo:
     biomeValueMap: {fileID: 2800000, guid: 7b811ba04cb4c44d39954161240dc519, type: 3}
     mapKeys:
@@ -366,7 +366,7 @@ MonoBehaviour:
     - colorVal: 47
       biome: {fileID: 11400000, guid: 7707b59b49632f9c89a8214b8617f531, type: 2}
     - colorVal: 55
-      biome: {fileID: 11400000, guid: 624aabf01d3be062ebad38e222a7b71f, type: 2}
+      biome: {fileID: 11400000, guid: 2b2d7175f2724f7788525d99a11b6ab2, type: 2}
     - colorVal: 71
       biome: {fileID: 11400000, guid: 624aabf01d3be062ebad38e222a7b71f, type: 2}
     - colorVal: 79
@@ -388,7 +388,7 @@ MonoBehaviour:
     - colorVal: 175
       biome: {fileID: 11400000, guid: 9ac221ab1b6ebdb4aa65681f8027928a, type: 2}
     - colorVal: 207
-      biome: {fileID: 11400000, guid: 9ac221ab1b6ebdb4aa65681f8027928a, type: 2}
+      biome: {fileID: 11400000, guid: 3a55a47ac63c59c5c9c0b621ea979dba, type: 2}
     perlinRemapTextFile: {fileID: 4900000, guid: 130658dec6504b135856d003f1dbe8a1, type: 3}
     overrideMapWithValue: 0
     overrideValue: 0

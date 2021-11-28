@@ -64,10 +64,14 @@ public class TerrainGeneratorV2 : MonoBehaviour
                 float sampX2 = (float)x * biomeMapNoiseScale + x02;
                 float sampY2 = (float)y * biomeMapNoiseScale + y02;
 
-                float v1 = Mathf.PerlinNoise(sampX1, sampY1);
-                float v2 = Mathf.PerlinNoise(sampX2, sampY2);
 
-                ret[x, y] = biomesInfo.GetBiomeForVals(Mathf.Clamp01(v1), Mathf.Clamp01(v2));
+                // float v1 = Mathf.PerlinNoise(sampX1, sampY1);
+                // float v2 = Mathf.PerlinNoise(sampX2, sampY2);
+                //simplex noise seems pretty uniform between -0.7 and 0.7
+                float v1 = Unity.Mathematics.noise.snoise(new Unity.Mathematics.float2(sampX1, sampY1));
+                float v2 = Unity.Mathematics.noise.snoise(new Unity.Mathematics.float2(sampX2, sampY2));
+
+                ret[x, y] = biomesInfo.GetBiomeForVals(Mathf.Clamp01(Mathf.InverseLerp(-0.8f, 0.8f, v1)), Mathf.Clamp01(Mathf.InverseLerp(-0.8f, 0.8f, v2)));
                 if (ret[x, y] == -1)
                 {
                     ret[x, y] = 0;
@@ -75,7 +79,7 @@ public class TerrainGeneratorV2 : MonoBehaviour
 
                 if (sw != null)
                 {
-                    sw.WriteLine(v1 + " " + v2);
+                    // sw.WriteLine(v1 + " " + v2);
                 }
             }
 
@@ -84,13 +88,13 @@ public class TerrainGeneratorV2 : MonoBehaviour
         return ret;
     }
 
-    private TerrainChunkData GenerateNewTerrainChunkData(Vector2 chunkCenter, int chunkSideLength)
+    private TerrainChunkData GenerateNewTerrainChunkData(Vector2 chunkCenter, int chunkSideLength, StreamWriter perlinValuesOut)
     {
         int numMarginPts = 5;
         int dim = chunkSideLength + 1 + 2 * numMarginPts;
 
 
-        int[,] chunkBiomeMap = GenerateChunkBiomeMap(chunkCenter, dim);
+        int[,] chunkBiomeMap = GenerateChunkBiomeMap(chunkCenter, dim, perlinValuesOut);
 
         int numBiomes = biomes.Length;
         float[,,] allHeightMaps = new float[dim, dim, numBiomes];
@@ -193,20 +197,20 @@ public class TerrainGeneratorV2 : MonoBehaviour
         return ret;
     }
 
-    public void RequestNewChunkData(Action<TerrainChunkData> callback, Vector2 chunkCenter, int chunkSideLength, bool startParallelTask = true)
+    public void RequestNewChunkData(Action<TerrainChunkData> callback, Vector2 chunkCenter, int chunkSideLength, bool startParallelTask = true, StreamWriter perlinValuesOut = null)
     {
         if (startParallelTask)
             Task.Run(() =>
             {
-                NewChunkRequestThread(callback, chunkCenter, chunkSideLength, startParallelTask);
+                NewChunkRequestThread(callback, chunkCenter, chunkSideLength, startParallelTask, perlinValuesOut);
             });
         else
-            NewChunkRequestThread(callback, chunkCenter, chunkSideLength, startParallelTask);
+            NewChunkRequestThread(callback, chunkCenter, chunkSideLength, startParallelTask, perlinValuesOut);
     }
 
-    private void NewChunkRequestThread(Action<TerrainChunkData> callback, Vector2 chunkCenter, int chunkSideLength, bool parallelTask)
+    private void NewChunkRequestThread(Action<TerrainChunkData> callback, Vector2 chunkCenter, int chunkSideLength, bool parallelTask, StreamWriter perlinValuesOut)
     {
-        TerrainChunkData terrainChunkData = GenerateNewTerrainChunkData(chunkCenter, chunkSideLength);
+        TerrainChunkData terrainChunkData = GenerateNewTerrainChunkData(chunkCenter, chunkSideLength, perlinValuesOut);
 
         if (parallelTask)
             lock (newTerrainChunkCallbackQueue)
@@ -347,8 +351,10 @@ public class TerrainGeneratorV2 : MonoBehaviour
             if (overrideMapWithValue)
                 return overrideValue;
 
-            float rv1 = remapValues[Mathf.RoundToInt(v1 * (remapValues.Length - 1))];
-            float rv2 = remapValues[Mathf.RoundToInt(v2 * (remapValues.Length - 1))];
+            // float rv1 = remapValues[Mathf.RoundToInt(v1 * (remapValues.Length - 1))];
+            // float rv2 = remapValues[Mathf.RoundToInt(v2 * (remapValues.Length - 1))];
+            float rv1 = v1;
+            float rv2 = v2;
             int x = Mathf.RoundToInt(rv1 * (textureWidth - 1));
             int y = Mathf.RoundToInt(rv2 * (textureHeight - 1));
             Color c = biomeValues[x + textureWidth * y];

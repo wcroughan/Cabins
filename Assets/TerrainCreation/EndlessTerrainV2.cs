@@ -53,6 +53,7 @@ public class EndlessTerrainV2 : MonoBehaviour
 
     public static TerrainGeneratorV2 terrainGenerator;
 
+
     void OnValidate()
     {
         lodInfos_static = lodInfos;
@@ -198,6 +199,7 @@ public class EndlessTerrainV2 : MonoBehaviour
                 Vector2 offset = new Vector2(xo, yo);
                 if ((offset * (float)chunkSideLength).sqrMagnitude > chunkCreateDistance_sq)
                 {
+
                     continue;
                 }
 

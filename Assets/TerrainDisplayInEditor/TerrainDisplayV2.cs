@@ -1,6 +1,7 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using System.IO;
 
 [ExecuteInEditMode]
 public class TerrainDisplayV2 : MonoBehaviour
@@ -49,15 +50,19 @@ public class TerrainDisplayV2 : MonoBehaviour
 
     public void RemakeTerrain()
     {
+        StreamWriter perlinValuesOut = new StreamWriter("perlinValues.txt", false);
+
         ClearChildren();
         for (int x = 0; x < numChunksPerSide; x++)
         {
             for (int y = 0; y < numChunksPerSide; y++)
             {
 
-                terrainGenerator.RequestNewChunkData(OnNewChunkDataReceived, coord + new Vector2(x, y) * chunkSize, chunkSize, startParallelTask: false);
+                terrainGenerator.RequestNewChunkData(OnNewChunkDataReceived, coord + new Vector2(x, y) * chunkSize, chunkSize, startParallelTask: false, perlinValuesOut: perlinValuesOut);
             }
         }
+
+        perlinValuesOut.Close();
     }
 
     private void OnNewChunkDataReceived(TerrainChunkData terrainChunkData)

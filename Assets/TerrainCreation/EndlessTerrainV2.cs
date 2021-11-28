@@ -11,14 +11,18 @@ public class EndlessTerrainV2 : MonoBehaviour
     GameObject terrainSectionPrefab;
     public static GameObject sectionPrefab;
 
-    public const int chunkSideLength = 120;
+    public const int chunkSideLength = 144;
     public const int chunkVtxPerSide = chunkSideLength + 1;
 
-    public const int sectionSideLength = 24;
+    // public const int sectionSideLength = 24;
+    public const int sectionSideLength = 72;
     public const int sectionVtxPerSide = sectionSideLength + 1;
 
+    public static bool hasAnyTerrainCollider;
+
     Dictionary<Vector2, TerrainChunk> terrainChunks;
-    List<TerrainChunk> terrainChunksViewableLastUpdate;
+    List<TerrainChunk> terrainChunksViewableLastUpdate = new List<TerrainChunk>();
+    List<TerrainChunk> terrainChunksWithCollidersLastUpdate = new List<TerrainChunk>();
 
     public static Vector2 viewerPosition;
     Vector2 oldViewerPosition_viewing, oldViewerPosition_colliding;
@@ -26,13 +30,15 @@ public class EndlessTerrainV2 : MonoBehaviour
     public const float viewerMoveThreshForViewableUpdate_sq = viewerMoveThreshForViewableUpdate * viewerMoveThreshForViewableUpdate;
     public const float viewerMoveThreshForCollidingUpdate = 25f;
     public const float viewerMoveThreshForCollidingUpdate_sq = viewerMoveThreshForCollidingUpdate * viewerMoveThreshForCollidingUpdate;
-    public const float colliderRequestDistance = 100f;
+    public const float colliderRequestDistance = 300f;
     public const float colliderRequestDistance_sq = colliderRequestDistance * colliderRequestDistance;
-    public const float colliderEnableDistance = 50f;
+    public const float colliderEnableDistance = 150f;
     public const float colliderEnableDistance_sq = colliderEnableDistance * colliderEnableDistance;
 
     public const float chunkCreateDistance = 1000f;
     public const float chunkCreateDistance_sq = chunkCreateDistance * chunkCreateDistance;
+    public const float chunkDestroyDistance = 2000f;
+    public const float chunkDestroyDistance_sq = chunkDestroyDistance * chunkDestroyDistance;
 
     [SerializeField]
     LODThreshInfo[] lodInfos;
@@ -89,6 +95,10 @@ public class EndlessTerrainV2 : MonoBehaviour
     // Start is called before the first frame update
     void Start()
     {
+        terrainChunks = new Dictionary<Vector2, TerrainChunk>();
+        sectionPrefab = terrainSectionPrefab;
+        hasAnyTerrainCollider = false;
+
         maxViewableDistance = lodInfos[lodInfos.Length - 1].distThresh;
         maxViewableDistance_sq = maxViewableDistance * maxViewableDistance;
         oldViewerPosition_colliding = new Vector2(viewer.position.x, viewer.position.z);
@@ -129,14 +139,37 @@ public class EndlessTerrainV2 : MonoBehaviour
     void UpdateColliders()
     {
         Vector2 currentChunkCoord = new Vector2(Mathf.RoundToInt(viewerPosition.x / chunkSideLength), Mathf.RoundToInt(viewerPosition.y / chunkSideLength));
+
+        HashSet<Vector2> alreadyCheckedCoords = new HashSet<Vector2>();
+        for (int i = terrainChunksWithCollidersLastUpdate.Count - 1; i >= 0; i--)
+        {
+            TerrainChunk terrainChunk = terrainChunksWithCollidersLastUpdate[i];
+            alreadyCheckedCoords.Add(terrainChunk.chunkCoord);
+            terrainChunk.UpdateEnabledColliders();
+            if (!terrainChunk.anyCollidersEnabled)
+            {
+                terrainChunksWithCollidersLastUpdate.RemoveAt(i);
+            }
+        }
+
         for (int xo = -1; xo <= 1; xo++)
         {
             for (int yo = -1; yo <= 1; yo++)
             {
-                TerrainChunk terrainChunk = terrainChunks[currentChunkCoord];
+                Vector2 checkCoord = currentChunkCoord + new Vector2(xo, yo);
+                if (alreadyCheckedCoords.Contains(checkCoord))
+                {
+                    continue;
+                }
+
+                TerrainChunk terrainChunk = terrainChunks[checkCoord];
                 //terrainChunk should always exist since chunk spawn distance should be greater than sqrt(2)/2*chunksize
 
                 terrainChunk.UpdateEnabledColliders();
+                if (terrainChunk.anyCollidersEnabled)
+                {
+                    terrainChunksWithCollidersLastUpdate.Add(terrainChunk);
+                }
             }
         }
     }
@@ -145,15 +178,35 @@ public class EndlessTerrainV2 : MonoBehaviour
     {
         Vector2 currentChunkCoord = new Vector2(Mathf.RoundToInt(viewerPosition.x / chunkSideLength), Mathf.RoundToInt(viewerPosition.y / chunkSideLength));
         int chunkCoordCheckDist = Mathf.CeilToInt(chunkCreateDistance / chunkSideLength);
+
+        HashSet<Vector2> alreadyCheckedCoords = new HashSet<Vector2>();
+        for (int i = terrainChunksViewableLastUpdate.Count - 1; i >= 0; i--)
+        {
+            TerrainChunk terrainChunk = terrainChunksViewableLastUpdate[i];
+            alreadyCheckedCoords.Add(terrainChunk.chunkCoord);
+            terrainChunk.UpdateViewableSections();
+            if (!terrainChunk.anyViewable)
+            {
+                terrainChunksViewableLastUpdate.RemoveAt(i);
+            }
+        }
+
         for (int xo = -chunkCoordCheckDist; xo <= chunkCoordCheckDist; xo++)
         {
             for (int yo = -chunkCoordCheckDist; yo <= chunkCoordCheckDist; yo++)
             {
                 Vector2 offset = new Vector2(xo, yo);
-                if (offset.sqrMagnitude > chunkCreateDistance_sq)
+                if ((offset * (float)chunkSideLength).sqrMagnitude > chunkCreateDistance_sq)
+                {
                     continue;
+                }
 
                 Vector2 checkCoord = currentChunkCoord + offset;
+                if (alreadyCheckedCoords.Contains(checkCoord))
+                {
+                    continue;
+                }
+
                 if (terrainChunks.ContainsKey(checkCoord))
                 {
                     TerrainChunk terrainChunk = terrainChunks[checkCoord];
@@ -166,7 +219,14 @@ public class EndlessTerrainV2 : MonoBehaviour
                 }
                 else
                 {
-                    terrainChunks[checkCoord] = new TerrainChunk(checkCoord, transform);
+                    TerrainChunk terrainChunk = new TerrainChunk(checkCoord, transform);
+                    terrainChunks[checkCoord] = terrainChunk;
+                    terrainChunk.UpdateViewableSections();
+                    terrainChunk.UpdateEnabledColliders();
+                    if (terrainChunk.anyViewable)
+                    {
+                        terrainChunksViewableLastUpdate.Add(terrainChunk);
+                    }
                 }
             }
         }
@@ -190,13 +250,16 @@ public class TerrainChunk
     private List<TerrainSection> sectionsViewable = new List<TerrainSection>();
 
     public Vector2 centerLocation { get; }
+    public Vector2 chunkCoord { get; }
 
     public Bounds bounds { get; }
 
     public bool anyViewable { get; private set; }
+    public bool anyCollidersEnabled { get; private set; }
 
     public TerrainChunk(Vector2 coord, Transform parent)
     {
+        chunkCoord = coord;
         centerLocation = coord * EndlessTerrainV2.chunkSideLength;
         bounds = new Bounds(new Vector3(centerLocation.x, 0f, centerLocation.y),
                             new Vector3(EndlessTerrainV2.chunkSideLength, 0f, EndlessTerrainV2.chunkSideLength));
@@ -212,11 +275,15 @@ public class TerrainChunk
             }
         }
 
+        if (chunkCoord == new Vector2(-19, 2))
+            Debug.Log("Requesting chunk data");
         EndlessTerrainV2.terrainGenerator.RequestNewChunkData(OnNewChunkDataReceived, centerLocation, EndlessTerrainV2.chunkSideLength);
     }
 
     private void OnNewChunkDataReceived(TerrainChunkData terrainChunkData)
     {
+        if (chunkCoord == new Vector2(-19, 2))
+            Debug.Log("Got chunk data");
         foreach (TerrainSection terrainSection in sections)
         {
             terrainSection.terrainChunkData = terrainChunkData;
@@ -234,15 +301,18 @@ public class TerrainChunk
                 terrainSection.DisableCollider();
 
             sectionsWithEnabledColliders.Clear();
+            anyCollidersEnabled = false;
             return;
         }
 
+        anyCollidersEnabled = false;
         sectionsWithEnabledColliders.Clear();
         foreach (TerrainSection terrainSection in sections)
         {
             float sd = (terrainSection.centerLocation - EndlessTerrainV2.viewerPosition).sqrMagnitude;
             if (sd < EndlessTerrainV2.colliderEnableDistance_sq)
             {
+                anyCollidersEnabled = true;
                 terrainSection.EnableCollider();
                 sectionsWithEnabledColliders.Add(terrainSection);
             }
@@ -294,6 +364,7 @@ public class TerrainChunk
             }
             //lod should never be -1 at this point!
             terrainSection.SetViewable(lodi);
+            sectionsViewable.Add(terrainSection);
         }
     }
 
@@ -313,17 +384,20 @@ public class TerrainChunk
                 {
                     RequestMesh(currentLOD);
                 }
+                UpdateTexture();
             }
         }
         private bool viewable = false;
 
         public Vector2 centerLocation;
+        public Vector2 chunkCoord { get; }
+        public Vector2 sectionCoord { get; }
 
         private GameObject meshObject;
         private MeshRenderer meshRenderer;
         private MeshCollider meshCollider;
         private MeshFilter meshFilter;
-        private Dictionary<int, Mesh> meshes;
+        private Dictionary<int, Mesh> meshes = new Dictionary<int, Mesh>();
 
         public TerrainChunkData terrainChunkData;
 
@@ -333,7 +407,6 @@ public class TerrainChunk
         private bool requestedColliderMesh => requestedMeshLOD[EndlessTerrainV2.colliderLOD_static];
         private bool waitingOnColliderMesh = false;
 
-        private Vector2 sectionCoord;
 
         public TerrainSection(Vector2 chunkCoord, Vector2 sectionCoord, Transform parent)
         {
@@ -341,16 +414,28 @@ public class TerrainChunk
                                     + (sectionCoord + 0.5f * Vector2.one) * EndlessTerrainV2.sectionSideLength; //middle of this section
             Vector3 positionV3 = new Vector3(this.centerLocation.x, 0f, this.centerLocation.y);
             this.sectionCoord = sectionCoord;
+            this.chunkCoord = chunkCoord;
 
-            meshObject = GameObject.Instantiate(EndlessTerrainV2.sectionPrefab, positionV3, Quaternion.identity);
+            for (int l = TerrainGeneratorV2.LOD_MIN; l <= TerrainGeneratorV2.LOD_MAX; l++)
+            {
+                hasMeshLOD[l] = false;
+                requestedMeshLOD[l] = false;
+            }
+
+            meshObject = GameObject.Instantiate(EndlessTerrainV2.sectionPrefab, Vector3.zero, Quaternion.identity);
             meshObject.SetActive(false);
             meshObject.name = "Section " + chunkCoord + ", " + sectionCoord;
             meshRenderer = meshObject.GetComponent<MeshRenderer>();
             meshFilter = meshObject.GetComponent<MeshFilter>();
             meshCollider = meshObject.GetComponent<MeshCollider>();
             meshCollider.enabled = false;
-            meshObject.transform.position = positionV3;
+            // meshObject.transform.position = positionV3;
             meshObject.transform.SetParent(parent, false);
+        }
+
+        private void UpdateTexture()
+        {
+            meshRenderer.material.mainTexture = terrainChunkData.GetTexture();
         }
 
         public void DisableCollider()
@@ -412,6 +497,7 @@ public class TerrainChunk
                 return;
             }
 
+
             if (hasMeshLOD[lod])
             {
                 return;
@@ -419,6 +505,8 @@ public class TerrainChunk
             else if (!requestedMeshLOD[lod])
             {
                 requestedMeshLOD[lod] = true;
+                if (chunkCoord == new Vector2(-19, 2))
+                    Debug.Log("Requesting mesh data");
                 EndlessTerrainV2.terrainGenerator.RequestSectionMesh(OnMeshDataReceived, terrainChunkData, sectionCoord, EndlessTerrainV2.sectionSideLength, lod);
             }
 
@@ -426,7 +514,10 @@ public class TerrainChunk
 
         private void OnMeshDataReceived(TerrainSectionMeshData terrainSectionMeshData)
         {
+            if (chunkCoord == new Vector2(-19, 2))
+                Debug.Log("Received mesh data");
             meshes[terrainSectionMeshData.LOD] = terrainSectionMeshData.CreateMesh();
+            hasMeshLOD[terrainSectionMeshData.LOD] = true;
             if (terrainSectionMeshData.LOD == currentLOD)
             {
                 meshFilter.mesh = meshes[terrainSectionMeshData.LOD];
@@ -446,7 +537,11 @@ public class TerrainChunk
             meshCollider.sharedMesh = meshes[EndlessTerrainV2.colliderLOD_static];
             hasColliderBakedMesh = true;
             if (waitingOnColliderMesh)
+            {
                 meshCollider.enabled = true;
+            }
+
+            EndlessTerrainV2.hasAnyTerrainCollider = true;
         }
     }
 

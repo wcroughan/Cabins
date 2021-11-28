@@ -38,7 +38,7 @@ RenderSettings:
   m_ReflectionIntensity: 1
   m_CustomReflection: {fileID: 0}
   m_Sun: {fileID: 705507994}
-  m_IndirectSpecularColor: {r: 0.451401, g: 0.5008942, b: 0.5723129, a: 1}
+  m_IndirectSpecularColor: {r: 0.45140058, g: 0.50089306, b: 0.57231236, a: 1}
   m_UseRadianceAmbientProbe: 0
 --- !u!157 &3
 LightmapSettings:
@@ -1063,7 +1063,50 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 0d08a659a55789437b9c4617a85790b8, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  seed: 0
+  seed: 100
+  biomeMapNoiseScaleFactor: -7.04
+  biomesInfo:
+    biomeValueMap: {fileID: 2800000, guid: 7b811ba04cb4c44d39954161240dc519, type: 3}
+    mapKeys:
+    - colorVal: 0
+      biome: {fileID: 11400000, guid: 4d5e29c28e70cd692b9cdf72a6512eb2, type: 2}
+    - colorVal: 7
+      biome: {fileID: 11400000, guid: 8bbd336b1a042c71684aa57020c67bb4, type: 2}
+    - colorVal: 15
+      biome: {fileID: 11400000, guid: 9ac221ab1b6ebdb4aa65681f8027928a, type: 2}
+    - colorVal: 23
+      biome: {fileID: 11400000, guid: 6b3b3e5c1d19aa61cb80d6d676a158eb, type: 2}
+    - colorVal: 39
+      biome: {fileID: 11400000, guid: 3e0e0e33779c36951ac1b774a34c88f5, type: 2}
+    - colorVal: 47
+      biome: {fileID: 11400000, guid: 7707b59b49632f9c89a8214b8617f531, type: 2}
+    - colorVal: 55
+      biome: {fileID: 11400000, guid: 624aabf01d3be062ebad38e222a7b71f, type: 2}
+    - colorVal: 71
+      biome: {fileID: 11400000, guid: 624aabf01d3be062ebad38e222a7b71f, type: 2}
+    - colorVal: 79
+      biome: {fileID: 11400000, guid: f8c8f1039eadb1d77af02eeacc3e4262, type: 2}
+    - colorVal: 87
+      biome: {fileID: 11400000, guid: ecff827f54941d57b89fdb02eaaf7e65, type: 2}
+    - colorVal: 95
+      biome: {fileID: 11400000, guid: 4d5e29c28e70cd692b9cdf72a6512eb2, type: 2}
+    - colorVal: 103
+      biome: {fileID: 11400000, guid: 68d176bfb459ff45b85cae60e1cb89b9, type: 2}
+    - colorVal: 111
+      biome: {fileID: 11400000, guid: 24a8a24b76109be58a6d75bf5135aec5, type: 2}
+    - colorVal: 119
+      biome: {fileID: 11400000, guid: 17fe1808185f1c2cf880161c43167d63, type: 2}
+    - colorVal: 127
+      biome: {fileID: 11400000, guid: f19d4b6f619c473a588254a2969be535, type: 2}
+    - colorVal: 135
+      biome: {fileID: 11400000, guid: 5b13358a69bb4e7f8878da5b92d79afc, type: 2}
+    - colorVal: 175
+      biome: {fileID: 11400000, guid: 9ac221ab1b6ebdb4aa65681f8027928a, type: 2}
+    - colorVal: 207
+      biome: {fileID: 11400000, guid: 9ac221ab1b6ebdb4aa65681f8027928a, type: 2}
+    perlinRemapTextFile: {fileID: 4900000, guid: 130658dec6504b135856d003f1dbe8a1, type: 3}
+    overrideMapWithValue: 0
+    overrideValue: 0
 --- !u!4 &1976245510
 Transform:
   m_ObjectHideFlags: 0

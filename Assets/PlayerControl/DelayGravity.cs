@@ -14,9 +14,9 @@ public class DelayGravity : MonoBehaviour
     }
     IEnumerator ActivateGravityAfterDelay()
     {
-        while (!EndlessTerrain.hasAnyTerrainCollider)
+        while (!EndlessTerrainV2.hasAnyTerrainCollider)
             yield return new WaitForSeconds(1);
-        Debug.Log(EndlessTerrain.hasAnyTerrainCollider);
+        // Debug.Log(EndlessTerrainV2.hasAnyTerrainCollider);
         rb.useGravity = true;
     }
 

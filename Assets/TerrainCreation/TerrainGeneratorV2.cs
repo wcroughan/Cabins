@@ -28,7 +28,7 @@ public class TerrainGeneratorV2 : MonoBehaviour
     {
         biomeMapNoiseScale = Mathf.Exp(biomeMapNoiseScaleFactor);
         randomSeed = seed;
-        biomesInfo.LoadRemapValues();
+        biomesInfo.InitSelector();
         biomes = biomesInfo.GetAllBiomes();
     }
 
@@ -36,7 +36,7 @@ public class TerrainGeneratorV2 : MonoBehaviour
     {
         biomeMapNoiseScale = Mathf.Exp(biomeMapNoiseScaleFactor);
         randomSeed = seed;
-        biomesInfo.LoadRemapValues();
+        biomesInfo.InitSelector();
         biomes = biomesInfo.GetAllBiomes();
     }
 
@@ -167,8 +167,8 @@ public class TerrainGeneratorV2 : MonoBehaviour
         {
             for (int x = 0; x < sectionSize + 1; x += vtxStride)
             {
-                float z = terrainChunkData.heightMap[xi0 + x, yi0 + y];
-                ret.vertices[vi] = new Vector3(xoffset + x, z, yoffset + y);
+                float height = terrainChunkData.heightMap[xi0 + x, yi0 + y];
+                ret.vertices[vi] = new Vector3(xoffset + x, height, yoffset + y);
                 ret.UVs[vi] = new Vector2((float)x / fullUVWidth + xUV0, (float)y / fullUVHeight + yUV0);
                 if (x > 0 && y > 0)
                 {
@@ -187,83 +187,77 @@ public class TerrainGeneratorV2 : MonoBehaviour
         return ret;
     }
 
-    public void RequestNewChunkData(Action<TerrainChunkData> callback, Vector2 chunkCenter, int chunkSideLength)
+    public void RequestNewChunkData(Action<TerrainChunkData> callback, Vector2 chunkCenter, int chunkSideLength, bool startParallelTask = true)
     {
-#if UNITY_EDITOR
-        NewChunkRequestThread(callback, chunkCenter, chunkSideLength);
-#else
-        Task.Run(() =>
-        {
-            NewChunkRequestThread(callback, chunkCenter, chunkSideLength);
-        });
-#endif
+        if (startParallelTask)
+            Task.Run(() =>
+            {
+                NewChunkRequestThread(callback, chunkCenter, chunkSideLength, startParallelTask);
+            });
+        else
+            NewChunkRequestThread(callback, chunkCenter, chunkSideLength, startParallelTask);
     }
 
-    private void NewChunkRequestThread(Action<TerrainChunkData> callback, Vector2 chunkCenter, int chunkSideLength)
+    private void NewChunkRequestThread(Action<TerrainChunkData> callback, Vector2 chunkCenter, int chunkSideLength, bool parallelTask)
     {
         TerrainChunkData terrainChunkData = GenerateNewTerrainChunkData(chunkCenter, chunkSideLength);
 
-#if UNITY_EDITOR
-        callback(terrainChunkData);
-#else
-        lock (newTerrainChunkCallbackQueue)
-        {
-            newTerrainChunkCallbackQueue.Enqueue(new TerrainCallbackInfo<TerrainChunkData>(callback, terrainChunkData));
-        }
-#endif
+        if (parallelTask)
+            lock (newTerrainChunkCallbackQueue)
+            {
+                newTerrainChunkCallbackQueue.Enqueue(new TerrainCallbackInfo<TerrainChunkData>(callback, terrainChunkData));
+            }
+        else
+            callback(terrainChunkData);
     }
 
 
-    public void RequestSectionMesh(Action<TerrainSectionMeshData> callback, TerrainChunkData terrainChunkData, Vector2 sectionCoord, int sectionSize, int levelOfDetail)
+    public void RequestSectionMesh(Action<TerrainSectionMeshData> callback, TerrainChunkData terrainChunkData, Vector2 sectionCoord, int sectionSize, int levelOfDetail, bool startParallelTask = true)
     {
-#if UNITY_EDITOR
-        SectionMeshRequestThread(callback, terrainChunkData, sectionCoord, sectionSize, levelOfDetail);
-#else
-        Task.Run(() =>
-        {
-            SectionMeshRequestThread(callback, terrainChunkData, sectionCoord, sectionSize, levelOfDetail);
-        });
-#endif
+        if (startParallelTask)
+            Task.Run(() =>
+            {
+                SectionMeshRequestThread(callback, terrainChunkData, sectionCoord, sectionSize, levelOfDetail, startParallelTask);
+            });
+        else
+            SectionMeshRequestThread(callback, terrainChunkData, sectionCoord, sectionSize, levelOfDetail, startParallelTask);
     }
 
-    private void SectionMeshRequestThread(Action<TerrainSectionMeshData> callback, TerrainChunkData terrainChunkData, Vector2 sectionCoord, int sectionSize, int levelOfDetail)
+    private void SectionMeshRequestThread(Action<TerrainSectionMeshData> callback, TerrainChunkData terrainChunkData, Vector2 sectionCoord, int sectionSize, int levelOfDetail, bool parallelTask)
     {
         TerrainSectionMeshData terrainSectionMeshData = GenerateTerrainSectionMeshData(terrainChunkData, sectionCoord, sectionSize, levelOfDetail);
 
-#if UNITY_EDITOR
-        callback(terrainSectionMeshData);
-#else
-        lock (terrainSectionMeshCallbackQueue)
-        {
-            terrainSectionMeshCallbackQueue.Enqueue(new TerrainCallbackInfo<TerrainSectionMeshData>(callback, terrainSectionMeshData));
-        }
-#endif
+        if (parallelTask)
+            lock (terrainSectionMeshCallbackQueue)
+            {
+                terrainSectionMeshCallbackQueue.Enqueue(new TerrainCallbackInfo<TerrainSectionMeshData>(callback, terrainSectionMeshData));
+            }
+        else
+            callback(terrainSectionMeshData);
     }
 
-    public void RequestSectionMeshBake(Action<TerrainSectionMeshBakeData> callback, int meshID)
+    public void RequestSectionMeshBake(Action<TerrainSectionMeshBakeData> callback, int meshID, bool startParallelTask = true)
     {
-#if UNITY_EDITOR
-        SectionMeshBakeThread(callback, meshID);
-#else
-        Task.Run(() =>
-        {
-            SectionMeshBakeThread(callback, meshID);
-        });
-#endif
+        if (startParallelTask)
+            Task.Run(() =>
+            {
+                SectionMeshBakeThread(callback, meshID, startParallelTask);
+            });
+        else
+            SectionMeshBakeThread(callback, meshID, startParallelTask);
     }
 
-    private void SectionMeshBakeThread(Action<TerrainSectionMeshBakeData> callback, int meshID)
+    private void SectionMeshBakeThread(Action<TerrainSectionMeshBakeData> callback, int meshID, bool parallelTask)
     {
         Physics.BakeMesh(meshID, false);
 
-#if UNITY_EDITOR
-        callback(new TerrainSectionMeshBakeData());
-#else
-        lock (terrainSectionMeshBakeCallbackQueue)
-        {
-            terrainSectionMeshBakeCallbackQueue.Enqueue(new TerrainCallbackInfo<TerrainSectionMeshBakeData>(callback, new TerrainSectionMeshBakeData()));
-        }
-#endif
+        if (parallelTask)
+            lock (terrainSectionMeshBakeCallbackQueue)
+            {
+                terrainSectionMeshBakeCallbackQueue.Enqueue(new TerrainCallbackInfo<TerrainSectionMeshBakeData>(callback, new TerrainSectionMeshBakeData()));
+            }
+        else
+            callback(new TerrainSectionMeshBakeData());
     }
 
     void Update()
@@ -316,6 +310,17 @@ public class TerrainGeneratorV2 : MonoBehaviour
 
         private int numPrintedWarnings;
 
+        private int textureWidth, textureHeight;
+        private Color[] biomeValues;
+
+        public void InitSelector()
+        {
+            LoadRemapValues();
+            textureWidth = biomeValueMap.width;
+            textureHeight = biomeValueMap.height;
+            biomeValues = biomeValueMap.GetPixels(0, 0, textureWidth, textureHeight);
+        }
+
         public void LoadRemapValues()
         {
             string remapTxt = perlinRemapTextFile.text;
@@ -338,9 +343,9 @@ public class TerrainGeneratorV2 : MonoBehaviour
 
             float rv1 = remapValues[Mathf.RoundToInt(v1 * (remapValues.Length - 1))];
             float rv2 = remapValues[Mathf.RoundToInt(v2 * (remapValues.Length - 1))];
-            int x = Mathf.RoundToInt(rv1 * biomeValueMap.width);
-            int y = Mathf.RoundToInt(rv2 * biomeValueMap.height);
-            Color c = biomeValueMap.GetPixel(x, y);
+            int x = Mathf.RoundToInt(rv1 * textureWidth);
+            int y = Mathf.RoundToInt(rv2 * textureHeight);
+            Color c = biomeValues[x + textureWidth * y];
             int cval = Mathf.RoundToInt(c.r * 255);
             // int cval = v1 > v2 ? 0 : 1;
             for (int i = 0; i < mapKeys.Length; i++)

@@ -63,6 +63,7 @@ public class ThirdPersonMovement : MonoBehaviour
     {
         godModeEnabled = !godModeEnabled;
         rb.useGravity = !godModeEnabled;
+        shouldCrouch = false;
     }
 
     void Start()

@@ -55,7 +55,7 @@ public class TerrainDisplayV2 : MonoBehaviour
             for (int y = 0; y < numChunksPerSide; y++)
             {
 
-                terrainGenerator.RequestNewChunkData(OnNewChunkDataReceived, coord + new Vector2(x, y) * chunkSize, chunkSize);
+                terrainGenerator.RequestNewChunkData(OnNewChunkDataReceived, coord + new Vector2(x, y) * chunkSize, chunkSize, startParallelTask: false);
             }
         }
     }
@@ -66,7 +66,7 @@ public class TerrainDisplayV2 : MonoBehaviour
         {
             for (int y = 0; y < numSectionsPerDim; y++)
             {
-                terrainGenerator.RequestSectionMesh(tsmd => OnTerrainSectionMeshReceived(tsmd, terrainChunkData), terrainChunkData, new Vector2(x, y), chunkSize / numSectionsPerDim, levelOfDetail);
+                terrainGenerator.RequestSectionMesh(tsmd => OnTerrainSectionMeshReceived(tsmd, terrainChunkData), terrainChunkData, new Vector2(x, y), chunkSize / numSectionsPerDim, levelOfDetail, startParallelTask: false);
             }
         }
     }

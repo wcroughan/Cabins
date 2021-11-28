@@ -14,6 +14,8 @@ public class TerrainGeneratorV2 : MonoBehaviour
     float biomeMapNoiseScaleFactor = -6f;
     float biomeMapNoiseScale;
     [SerializeField]
+    int biomeTransitionRadius = 10;
+    [SerializeField]
     BiomeSelector biomesInfo;
     public static Biome[] biomes;
     public const int randomOffsetRange = 100000;
@@ -90,7 +92,7 @@ public class TerrainGeneratorV2 : MonoBehaviour
 
     private TerrainChunkData GenerateNewTerrainChunkData(Vector2 chunkCenter, int chunkSideLength, StreamWriter perlinValuesOut)
     {
-        int numMarginPts = 5;
+        int numMarginPts = biomeTransitionRadius + 3;
         int dim = chunkSideLength + 1 + 2 * numMarginPts;
 
 
@@ -130,17 +132,71 @@ public class TerrainGeneratorV2 : MonoBehaviour
             z = nextz;
         }
 
+        int[,] chunkBiomeTextureMap = new int[dim, dim];
         float[,] heightMap = new float[dim, dim];
+        Dictionary<int, int> biomeCountWithinRadius = new Dictionary<int, int>();
         for (int x = 0; x < dim; x++)
         {
             for (int y = 0; y < dim; y++)
             {
-                int ahmi = heightMapIndexForBiomeIndex[chunkBiomeMap[x, y]];
-                heightMap[x, y] = allHeightMaps[x, y, ahmi];
+                for (int b = 0; b < numBiomes; b++)
+                    biomeCountWithinRadius[b] = 0;
+                float radiusDenom = 0;
+
+                for (int xo = -biomeTransitionRadius; xo <= biomeTransitionRadius; xo++)
+                {
+                    if (x + xo < 0 || x + xo >= dim)
+                        continue;
+                    for (int yo = -biomeTransitionRadius; yo <= biomeTransitionRadius; yo++)
+                    {
+                        if (y + yo < 0 || y + yo >= dim)
+                            continue;
+
+                        biomeCountWithinRadius[chunkBiomeMap[x + xo, y + yo]]++;
+                        radiusDenom++;
+                    }
+                }
+
+                heightMap[x, y] = 0;
+                float highestRepresentedHeight = float.NegativeInfinity;
+                for (int b = 0; b < numBiomes; b++)
+                {
+                    if (perlinValuesOut != null)
+                        perlinValuesOut.Write(biomeCountWithinRadius[b] + " ");
+                    int count = biomeCountWithinRadius[b];
+                    if (count > 0 && Mathf.Abs(biomes[b].heightMultiplier) > highestRepresentedHeight)
+                    {
+                        highestRepresentedHeight = Mathf.Abs(biomes[b].heightMultiplier);
+                        chunkBiomeTextureMap[x, y] = b;
+                    }
+                    int ahmi = heightMapIndexForBiomeIndex[b];
+                    heightMap[x, y] += allHeightMaps[x, y, ahmi] * (float)biomeCountWithinRadius[b] / radiusDenom;
+
+                }
+                if (perlinValuesOut != null)
+                    perlinValuesOut.WriteLine();
+            }
+        }
+        // 
+        Color[] colorMap = new Color[dim * dim];
+        //copying gradients to new ones for thread safety
+        Gradient[] gradients = new Gradient[numBiomes];
+        for (int i = 0; i < gradients.Length; i++)
+        {
+            gradients[i] = new Gradient();
+            gradients[i].SetKeys(biomes[i].gradient.colorKeys, biomes[i].gradient.alphaKeys);
+        }
+
+        for (int x = 0; x < dim; x++)
+        {
+            for (int y = 0; y < dim; y++)
+            {
+                int texBiome = chunkBiomeTextureMap[x, y];
+                colorMap[x + y * dim] = gradients[texBiome].Evaluate(heightMap[x, y] / biomes[texBiome].heightMultiplier);
             }
         }
 
-        return new TerrainChunkData(heightMap, chunkBiomeMap, chunkSideLength, numMarginPts, chunkCenter);
+        return new TerrainChunkData(heightMap, chunkBiomeMap, colorMap, chunkSideLength, numMarginPts, chunkCenter);
     }
 
 
@@ -405,7 +461,7 @@ public struct TerrainChunkData
     private Texture2D texture;
     private Color[] colorMap;
 
-    public TerrainChunkData(float[,] heightMap, int[,] biomeMap, int chunkSideLength, int numMarginPts, Vector2 chunkCenter)
+    public TerrainChunkData(float[,] heightMap, int[,] biomeMap, Color[] colorMap, int chunkSideLength, int numMarginPts, Vector2 chunkCenter)
     {
         this.heightMap = heightMap;
         this.biomeMap = biomeMap;
@@ -415,25 +471,8 @@ public struct TerrainChunkData
         textureCreated = false;
         texture = null;
 
-        int width = heightMap.GetLength(0);
-        int height = heightMap.GetLength(1);
-        colorMap = new Color[width * height];
+        this.colorMap = colorMap;
 
-        //copying gradients to new ones for thread safety
-        Gradient[] gradients = new Gradient[TerrainGeneratorV2.biomes.Length];
-        for (int i = 0; i < gradients.Length; i++)
-        {
-            gradients[i] = new Gradient();
-            gradients[i].SetKeys(TerrainGeneratorV2.biomes[i].gradient.colorKeys, TerrainGeneratorV2.biomes[i].gradient.alphaKeys);
-        }
-
-        for (int x = 0; x < width; x++)
-        {
-            for (int y = 0; y < height; y++)
-            {
-                colorMap[x + y * width] = gradients[biomeMap[x, y]].Evaluate(heightMap[x, y] / TerrainGeneratorV2.biomes[biomeMap[x, y]].heightMultiplier);
-            }
-        }
     }
 
     public Texture2D GetTexture()

@@ -20,6 +20,8 @@ public class TerrainDisplayV2 : MonoBehaviour
     int numChunksPerSide;
     [SerializeField, Range(0, 4)]
     int chunkSectionSubdivisions;
+    [SerializeField]
+    bool saveBiomeValsToFile = false;
 
     private TerrainGeneratorV2 terrainGenerator;
     private int chunkSize;
@@ -50,7 +52,9 @@ public class TerrainDisplayV2 : MonoBehaviour
 
     public void RemakeTerrain()
     {
-        StreamWriter perlinValuesOut = new StreamWriter("perlinValues.txt", false);
+        StreamWriter perlinValuesOut = null;
+        if (saveBiomeValsToFile)
+            perlinValuesOut = new StreamWriter("perlinValues.txt", false);
 
         ClearChildren();
         for (int x = 0; x < numChunksPerSide; x++)
@@ -62,7 +66,8 @@ public class TerrainDisplayV2 : MonoBehaviour
             }
         }
 
-        perlinValuesOut.Close();
+        if (saveBiomeValsToFile)
+            perlinValuesOut.Close();
     }
 
     private void OnNewChunkDataReceived(TerrainChunkData terrainChunkData)
@@ -80,6 +85,7 @@ public class TerrainDisplayV2 : MonoBehaviour
     {
         GameObject g = Instantiate(sectionPrefab, transform.position, Quaternion.identity);
         g.tag = "TerrainDisplay";
+        g.name = terrainChunkData.chunkCenter + "";
         g.transform.SetParent(transform, true);
         g.GetComponent<MeshFilter>().mesh = terrainSectionMeshData.CreateMesh();
         MeshRenderer meshRenderer = g.GetComponent<MeshRenderer>();

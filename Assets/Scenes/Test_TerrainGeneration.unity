@@ -332,10 +332,11 @@ MonoBehaviour:
   sectionPrefab: {fileID: 4451643203412476904, guid: f14aaeaa18c84c3dfa4c1a6b942cdd2e, type: 3}
   autoUpdate: 0
   coord: {x: 0, y: 0}
-  levelOfDetail: 4
+  levelOfDetail: 0
   sectionSize: 2
-  numChunksPerSide: 20
+  numChunksPerSide: 4
   chunkSectionSubdivisions: 2
+  saveBiomeValsToFile: 0
 --- !u!114 &1891915099
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -350,6 +351,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   seed: 27
   biomeMapNoiseScaleFactor: -7.95
+  biomeTransitionRadius: 15
   biomesInfo:
     biomeValueMap: {fileID: 2800000, guid: 7b811ba04cb4c44d39954161240dc519, type: 3}
     mapKeys:

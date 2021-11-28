@@ -520,6 +520,8 @@ MonoBehaviour:
   sprintFactor: 1.5
   cam: {fileID: 963194228}
   userMovement: {x: 0, y: 0}
+  maxTurnSpeed: 10
+  stoppedVelThresh: 1
   godModeEnabled: 0
   shouldJump: 0
   shouldCrouch: 0
@@ -715,8 +717,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 0d08a659a55789437b9c4617a85790b8, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  seed: 48
+  seed: 65
   biomeMapNoiseScaleFactor: -7.95
+  biomeTransitionRadius: 10
   biomesInfo:
     biomeValueMap: {fileID: 2800000, guid: 7b811ba04cb4c44d39954161240dc519, type: 3}
     mapKeys:

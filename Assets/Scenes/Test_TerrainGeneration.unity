@@ -334,7 +334,7 @@ MonoBehaviour:
   coord: {x: 0, y: 0}
   levelOfDetail: 2
   sectionSize: 2
-  numChunksPerSide: 6
+  numChunksPerSide: 2
   chunkSectionSubdivisions: 2
 --- !u!114 &1891915099
 MonoBehaviour:

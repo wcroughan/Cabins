@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using UnityEngine;
 using System;
 using System.Threading.Tasks;
+using System.IO;
 
 public class TerrainGeneratorV2 : MonoBehaviour
 {
@@ -23,7 +24,6 @@ public class TerrainGeneratorV2 : MonoBehaviour
     Queue<TerrainCallbackInfo<TerrainSectionMeshData>> terrainSectionMeshCallbackQueue = new Queue<TerrainCallbackInfo<TerrainSectionMeshData>>();
     Queue<TerrainCallbackInfo<TerrainSectionMeshBakeData>> terrainSectionMeshBakeCallbackQueue = new Queue<TerrainCallbackInfo<TerrainSectionMeshBakeData>>();
 
-
     void OnValidate()
     {
         biomeMapNoiseScale = Mathf.Exp(biomeMapNoiseScaleFactor);
@@ -40,7 +40,7 @@ public class TerrainGeneratorV2 : MonoBehaviour
         biomes = biomesInfo.GetAllBiomes();
     }
 
-    private int[,] GenerateChunkBiomeMap(Vector2 chunkCenter, int dim)
+    private int[,] GenerateChunkBiomeMap(Vector2 chunkCenter, int dim, StreamWriter sw = null)
     {
         System.Random rngesus = new System.Random(seed);
         float biomeNoiseOffsetX1 = (float)rngesus.NextDouble() * randomOffsetRange;
@@ -72,6 +72,11 @@ public class TerrainGeneratorV2 : MonoBehaviour
                 {
                     ret[x, y] = 0;
                 }
+
+                if (sw != null)
+                {
+                    sw.WriteLine(v1 + " " + v2);
+                }
             }
 
         }
@@ -83,6 +88,7 @@ public class TerrainGeneratorV2 : MonoBehaviour
     {
         int numMarginPts = 5;
         int dim = chunkSideLength + 1 + 2 * numMarginPts;
+
 
         int[,] chunkBiomeMap = GenerateChunkBiomeMap(chunkCenter, dim);
 
@@ -343,8 +349,8 @@ public class TerrainGeneratorV2 : MonoBehaviour
 
             float rv1 = remapValues[Mathf.RoundToInt(v1 * (remapValues.Length - 1))];
             float rv2 = remapValues[Mathf.RoundToInt(v2 * (remapValues.Length - 1))];
-            int x = Mathf.RoundToInt(rv1 * textureWidth);
-            int y = Mathf.RoundToInt(rv2 * textureHeight);
+            int x = Mathf.RoundToInt(rv1 * (textureWidth - 1));
+            int y = Mathf.RoundToInt(rv2 * (textureHeight - 1));
             Color c = biomeValues[x + textureWidth * y];
             int cval = Mathf.RoundToInt(c.r * 255);
             // int cval = v1 > v2 ? 0 : 1;

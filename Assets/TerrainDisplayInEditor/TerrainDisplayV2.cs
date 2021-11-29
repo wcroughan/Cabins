@@ -2,6 +2,8 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using System.IO;
+using UnityEditor.SceneManagement;
+using System.Diagnostics;
 
 [ExecuteInEditMode]
 public class TerrainDisplayV2 : MonoBehaviour
@@ -27,6 +29,8 @@ public class TerrainDisplayV2 : MonoBehaviour
     private int chunkSize;
     private int numSectionsPerDim;
 
+    private Stopwatch sw1, sw2;
+
 
     // Start is called before the first frame update
     void Update()
@@ -38,20 +42,28 @@ public class TerrainDisplayV2 : MonoBehaviour
 
     public void ClearChildren()
     {
+        bool sceneIsDirty = false;
         for (int i = transform.childCount - 1; i >= 0; i--)
         {
             GameObject go = transform.GetChild(i).gameObject;
             if (go.CompareTag("TerrainDisplay"))
+            {
                 DestroyImmediate(go);
+                sceneIsDirty = true;
+            }
 
         }
-        foreach (Transform t in transform)
-        {
-        }
+        if (sceneIsDirty)
+            EditorSceneManager.MarkSceneDirty(EditorSceneManager.GetActiveScene());
     }
 
     public void RemakeTerrain()
     {
+        sw1 = new Stopwatch();
+        sw2 = new Stopwatch();
+        sw1.Reset();
+        sw2.Reset();
+
         StreamWriter perlinValuesOut = null;
         if (saveBiomeValsToFile)
             perlinValuesOut = new StreamWriter("perlinValues.txt", false);
@@ -68,6 +80,11 @@ public class TerrainDisplayV2 : MonoBehaviour
 
         if (saveBiomeValsToFile)
             perlinValuesOut.Close();
+
+        UnityEngine.Debug.Log("mesh creation time: " + sw1.Elapsed.TotalSeconds);
+        UnityEngine.Debug.Log("texture creation time: " + sw2.Elapsed.TotalSeconds);
+
+        EditorSceneManager.MarkSceneDirty(EditorSceneManager.GetActiveScene());
     }
 
     private void OnNewChunkDataReceived(TerrainChunkData terrainChunkData)
@@ -87,11 +104,15 @@ public class TerrainDisplayV2 : MonoBehaviour
         g.tag = "TerrainDisplay";
         g.name = terrainChunkData.chunkCenter + "";
         g.transform.SetParent(transform, true);
+        sw1.Start();
         g.GetComponent<MeshFilter>().mesh = terrainSectionMeshData.CreateMesh();
+        sw1.Stop();
         MeshRenderer meshRenderer = g.GetComponent<MeshRenderer>();
         // meshRenderer.sharedMaterial.mainTexture = terrainChunkData.GetTexture();
         Material sm = new Material(meshRenderer.sharedMaterial);
+        sw2.Start();
         sm.mainTexture = terrainChunkData.GetTexture();
+        sw2.Stop();
         meshRenderer.sharedMaterial = sm;
     }
 

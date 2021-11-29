@@ -18,7 +18,7 @@ public class TerrainGeneratorV2 : MonoBehaviour
     [SerializeField]
     BiomeSelector biomesInfo;
     public static Biome[] biomes;
-    public const int randomOffsetRange = 100000;
+    public const int randomOffsetRange = 100;
     public const int LOD_MAX = 4;
     public const int LOD_MIN = 0;
 
@@ -45,10 +45,10 @@ public class TerrainGeneratorV2 : MonoBehaviour
     private int[,] GenerateChunkBiomeMap(Vector2 chunkCenter, int dim, StreamWriter sw = null)
     {
         System.Random rngesus = new System.Random(seed);
-        float biomeNoiseOffsetX1 = (float)rngesus.NextDouble() * randomOffsetRange;
-        float biomeNoiseOffsetY1 = (float)rngesus.NextDouble() * randomOffsetRange;
-        float biomeNoiseOffsetX2 = (float)rngesus.NextDouble() * randomOffsetRange;
-        float biomeNoiseOffsetY2 = (float)rngesus.NextDouble() * randomOffsetRange;
+        float biomeNoiseOffsetX1 = (float)rngesus.NextDouble() * (float)randomOffsetRange;
+        float biomeNoiseOffsetY1 = (float)rngesus.NextDouble() * (float)randomOffsetRange;
+        float biomeNoiseOffsetX2 = (float)rngesus.NextDouble() * (float)randomOffsetRange;
+        float biomeNoiseOffsetY2 = (float)rngesus.NextDouble() * (float)randomOffsetRange;
 
         float x01 = biomeMapNoiseScale * ((float)(dim - 1) / -2f + chunkCenter.x) + biomeNoiseOffsetX1;
         float y01 = biomeMapNoiseScale * ((float)(dim - 1) / -2f + chunkCenter.y) + biomeNoiseOffsetY1;
@@ -56,6 +56,9 @@ public class TerrainGeneratorV2 : MonoBehaviour
         float y02 = biomeMapNoiseScale * ((float)(dim - 1) / -2f + chunkCenter.y) + biomeNoiseOffsetY2;
 
         int[,] ret = new int[dim, dim];
+
+        if (sw != null)
+            sw.Write(chunkCenter.x + " " + chunkCenter.y + " " + x01 + " " + y01 + " " + x02 + " " + y02 + " " + biomeMapNoiseScale + " ");
 
         for (int x = 0; x < dim; x++)
         {
@@ -73,19 +76,24 @@ public class TerrainGeneratorV2 : MonoBehaviour
                 float v1 = Unity.Mathematics.noise.snoise(new Unity.Mathematics.float2(sampX1, sampY1));
                 float v2 = Unity.Mathematics.noise.snoise(new Unity.Mathematics.float2(sampX2, sampY2));
 
-                ret[x, y] = biomesInfo.GetBiomeForVals(Mathf.Clamp01(Mathf.InverseLerp(-0.8f, 0.8f, v1)), Mathf.Clamp01(Mathf.InverseLerp(-0.8f, 0.8f, v2)));
+                float rv1 = Mathf.Clamp01(Mathf.InverseLerp(-0.8f, 0.8f, v1));
+                float rv2 = Mathf.Clamp01(Mathf.InverseLerp(-0.8f, 0.8f, v2));
+
+                ret[x, y] = biomesInfo.GetBiomeForVals(rv1, rv2);
                 if (ret[x, y] == -1)
                 {
+                    Debug.LogWarning("Got -1 as a biome");
                     ret[x, y] = 0;
                 }
 
                 if (sw != null)
-                {
-                    // sw.WriteLine(v1 + " " + v2);
-                }
+                    sw.Write(x + " " + y + " " + sampX1 + " " + sampY1 + " " + sampX2 + " " + sampY1 + " " + v1 + " " + v2 + " " + rv1 + " " + rv2 + " " + ret[x, y] + " ");
             }
 
         }
+
+        if (sw != null)
+            sw.WriteLine();
 
         return ret;
     }
@@ -96,7 +104,22 @@ public class TerrainGeneratorV2 : MonoBehaviour
         int dim = chunkSideLength + 1 + 2 * numMarginPts;
 
 
-        int[,] chunkBiomeMap = GenerateChunkBiomeMap(chunkCenter, dim, perlinValuesOut);
+        // int[,] chunkBiomeMap = GenerateChunkBiomeMap(chunkCenter, dim, perlinValuesOut);
+        int[,] chunkBiomeMap = GenerateChunkBiomeMap(chunkCenter, dim);
+
+
+        if (perlinValuesOut != null)
+        {
+            perlinValuesOut.Write(chunkCenter.x + " " + chunkCenter.y + " " + chunkSideLength + " " + numMarginPts + " " + dim + " ");
+            for (int x = 0; x < dim; x++)
+            {
+                for (int y = 0; y < dim; y++)
+                {
+                    perlinValuesOut.Write(x + " " + y + " " + chunkBiomeMap[x, y] + " ");
+                }
+            }
+            perlinValuesOut.WriteLine();
+        }
 
         int numBiomes = biomes.Length;
         float[,,] allHeightMaps = new float[dim, dim, numBiomes];
@@ -120,6 +143,9 @@ public class TerrainGeneratorV2 : MonoBehaviour
                                 mask[x, y] = false;
                         }
                     }
+                    // if (perlinValuesOut != null && i == 0)
+                    //     biomes[i].PopulateHeightMap(allHeightMaps, mask, numBiomesFilled, chunkCenter, perlinValuesOut);
+                    // else
                     biomes[i].PopulateHeightMap(allHeightMaps, mask, numBiomesFilled, chunkCenter);
                     heightMapIndexForBiomeIndex[i] = numBiomesFilled;
                     numBiomesFilled++;
@@ -172,11 +198,18 @@ public class TerrainGeneratorV2 : MonoBehaviour
 
                 }
 
-                if (perlinValuesOut != null)
-                    perlinValuesOut.Write(chunkCenter.x + " " + chunkCenter.y + " " + x + " " + y + " " + heightMap[x, y] + " ");
+                float sum = 0;
+                for (int i = 0; i < numBiomes; i++)
+                    sum += biomeCountWithinRadius[i];
+                if (sum != radiusDenom)
+                    throw new Exception("Found the glitch");
+
+                // if (perlinValuesOut != null)
+                // perlinValuesOut.Write(chunkCenter.x + " " + chunkCenter.y + " " + x + " " + y + " " + heightMap[x, y] + " ");
             }
         }
-        perlinValuesOut.WriteLine();
+        // if (perlinValuesOut != null)
+        //     perlinValuesOut.WriteLine();
 
         Color[] colorMap = new Color[dim * dim];
         //copying gradients to new ones for thread safety

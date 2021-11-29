@@ -1,6 +1,7 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using System.IO;
 
 [CreateAssetMenu(menuName = "Biomes/Biome")]
 public class Biome : UpdatableTerrainInfo
@@ -30,7 +31,7 @@ public class Biome : UpdatableTerrainInfo
     // May also fill in where mask is false, but not guaranteed
     // Will not modify any values heightMap[x,y,i] for i!=idx
     // heightMap[x,y,idx] may depend on values heightMap[x,y,i] for i < idx, but will never read the values for i > idx
-    public virtual void PopulateHeightMap(float[,,] heightMap, bool[,] mask, int idx, Vector2 center)
+    public virtual void PopulateHeightMap(float[,,] heightMap, bool[,] mask, int idx, Vector2 center, StreamWriter sw = null)
     {
         AnimationCurve heightCurve_ThreadSafe = new AnimationCurve(heightCurve.keys);
 
@@ -54,9 +55,14 @@ public class Biome : UpdatableTerrainInfo
             {
                 Vector2 samplePoint = new Vector2(topLeftX + x, topLeftY + y) + center;
                 float height01 = GetHeightMapSample(samplePoint, noiseSampleOffsets);
+                if (sw != null)
+                    sw.Write(x + " " + y + " " + samplePoint.x + " " + samplePoint.y + " " + height01 + " ");
                 heightMap[x, y, idx] = heightCurve_ThreadSafe.Evaluate(height01) * heightMultiplier;
             }
         }
+
+        if (sw != null)
+            sw.WriteLine();
     }
 
     private float GetHeightMapSample(Vector2 sample, Vector2[] noiseSampleOffsets)

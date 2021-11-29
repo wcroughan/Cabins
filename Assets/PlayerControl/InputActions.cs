@@ -65,6 +65,14 @@ public class @InputActions : IInputActionCollection, IDisposable
                     ""expectedControlType"": ""Vector2"",
                     ""processors"": """",
                     ""interactions"": """"
+                },
+                {
+                    ""name"": ""SwitchMoveAnimations"",
+                    ""type"": ""Button"",
+                    ""id"": ""25e1dbe4-700d-4372-a2e5-28d30df37898"",
+                    ""expectedControlType"": ""Button"",
+                    ""processors"": """",
+                    ""interactions"": """"
                 }
             ],
             ""bindings"": [
@@ -177,6 +185,17 @@ public class @InputActions : IInputActionCollection, IDisposable
                     ""action"": ""Look"",
                     ""isComposite"": false,
                     ""isPartOfComposite"": false
+                },
+                {
+                    ""name"": """",
+                    ""id"": ""a364cffa-7d8a-4b0f-b266-0af841d005ea"",
+                    ""path"": ""<Keyboard>/e"",
+                    ""interactions"": """",
+                    ""processors"": """",
+                    ""groups"": """",
+                    ""action"": ""SwitchMoveAnimations"",
+                    ""isComposite"": false,
+                    ""isPartOfComposite"": false
                 }
             ]
         },
@@ -218,6 +237,7 @@ public class @InputActions : IInputActionCollection, IDisposable
         m_WorldMovement_Sprint = m_WorldMovement.FindAction("Sprint", throwIfNotFound: true);
         m_WorldMovement_ToggleFlying = m_WorldMovement.FindAction("ToggleFlying", throwIfNotFound: true);
         m_WorldMovement_Look = m_WorldMovement.FindAction("Look", throwIfNotFound: true);
+        m_WorldMovement_SwitchMoveAnimations = m_WorldMovement.FindAction("SwitchMoveAnimations", throwIfNotFound: true);
         // GameControl
         m_GameControl = asset.FindActionMap("GameControl", throwIfNotFound: true);
         m_GameControl_Pause = m_GameControl.FindAction("Pause", throwIfNotFound: true);
@@ -276,6 +296,7 @@ public class @InputActions : IInputActionCollection, IDisposable
     private readonly InputAction m_WorldMovement_Sprint;
     private readonly InputAction m_WorldMovement_ToggleFlying;
     private readonly InputAction m_WorldMovement_Look;
+    private readonly InputAction m_WorldMovement_SwitchMoveAnimations;
     public struct WorldMovementActions
     {
         private @InputActions m_Wrapper;
@@ -286,6 +307,7 @@ public class @InputActions : IInputActionCollection, IDisposable
         public InputAction @Sprint => m_Wrapper.m_WorldMovement_Sprint;
         public InputAction @ToggleFlying => m_Wrapper.m_WorldMovement_ToggleFlying;
         public InputAction @Look => m_Wrapper.m_WorldMovement_Look;
+        public InputAction @SwitchMoveAnimations => m_Wrapper.m_WorldMovement_SwitchMoveAnimations;
         public InputActionMap Get() { return m_Wrapper.m_WorldMovement; }
         public void Enable() { Get().Enable(); }
         public void Disable() { Get().Disable(); }
@@ -313,6 +335,9 @@ public class @InputActions : IInputActionCollection, IDisposable
                 @Look.started -= m_Wrapper.m_WorldMovementActionsCallbackInterface.OnLook;
                 @Look.performed -= m_Wrapper.m_WorldMovementActionsCallbackInterface.OnLook;
                 @Look.canceled -= m_Wrapper.m_WorldMovementActionsCallbackInterface.OnLook;
+                @SwitchMoveAnimations.started -= m_Wrapper.m_WorldMovementActionsCallbackInterface.OnSwitchMoveAnimations;
+                @SwitchMoveAnimations.performed -= m_Wrapper.m_WorldMovementActionsCallbackInterface.OnSwitchMoveAnimations;
+                @SwitchMoveAnimations.canceled -= m_Wrapper.m_WorldMovementActionsCallbackInterface.OnSwitchMoveAnimations;
             }
             m_Wrapper.m_WorldMovementActionsCallbackInterface = instance;
             if (instance != null)
@@ -335,6 +360,9 @@ public class @InputActions : IInputActionCollection, IDisposable
                 @Look.started += instance.OnLook;
                 @Look.performed += instance.OnLook;
                 @Look.canceled += instance.OnLook;
+                @SwitchMoveAnimations.started += instance.OnSwitchMoveAnimations;
+                @SwitchMoveAnimations.performed += instance.OnSwitchMoveAnimations;
+                @SwitchMoveAnimations.canceled += instance.OnSwitchMoveAnimations;
             }
         }
     }
@@ -380,6 +408,7 @@ public class @InputActions : IInputActionCollection, IDisposable
         void OnSprint(InputAction.CallbackContext context);
         void OnToggleFlying(InputAction.CallbackContext context);
         void OnLook(InputAction.CallbackContext context);
+        void OnSwitchMoveAnimations(InputAction.CallbackContext context);
     }
     public interface IGameControlActions
     {

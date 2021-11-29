@@ -38,7 +38,7 @@ RenderSettings:
   m_ReflectionIntensity: 1
   m_CustomReflection: {fileID: 0}
   m_Sun: {fileID: 0}
-  m_IndirectSpecularColor: {r: 0.4465785, g: 0.49641252, b: 0.574817, a: 1}
+  m_IndirectSpecularColor: {r: 0.44657898, g: 0.4964133, b: 0.5748178, a: 1}
   m_UseRadianceAmbientProbe: 0
 --- !u!157 &3
 LightmapSettings:
@@ -333,10 +333,10 @@ MonoBehaviour:
   autoUpdate: 0
   coord: {x: 0, y: 0}
   levelOfDetail: 0
-  sectionSize: 1
-  numChunksPerSide: 2
-  chunkSectionSubdivisions: 1
-  saveBiomeValsToFile: 1
+  sectionSize: 3
+  numChunksPerSide: 5
+  chunkSectionSubdivisions: 2
+  saveBiomeValsToFile: 0
 --- !u!114 &1891915099
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -349,9 +349,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 0d08a659a55789437b9c4617a85790b8, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  seed: 27
-  biomeMapNoiseScaleFactor: -5
-  biomeTransitionRadius: 15
+  seed: 36
+  biomeMapNoiseScaleFactor: -7.42
+  biomeTransitionRadius: 2
   biomesInfo:
     biomeValueMap: {fileID: 2800000, guid: 7b811ba04cb4c44d39954161240dc519, type: 3}
     mapKeys:
@@ -393,7 +393,7 @@ MonoBehaviour:
       biome: {fileID: 11400000, guid: 3a55a47ac63c59c5c9c0b621ea979dba, type: 2}
     perlinRemapTextFile: {fileID: 4900000, guid: 130658dec6504b135856d003f1dbe8a1, type: 3}
     overrideMapWithValue: 0
-    overrideValue: 0
+    overrideValue: 1
 --- !u!4 &1891915100
 Transform:
   m_ObjectHideFlags: 0

@@ -9,6 +9,10 @@ public class ThirdPersonMovement : MonoBehaviour
     Animator planeAnimator;
     GameObject wonkObject;
     GameObject planeObject;
+    GameObject planeExhaustObject;
+
+    private int planeSwitchTriggerID;
+    private int idleAnimationTriggerID;
 
     Rigidbody rb;
     [SerializeField]
@@ -28,6 +32,8 @@ public class ThirdPersonMovement : MonoBehaviour
     [SerializeField]
     float stoppedVelThresh;
     private float stoppedVelThresh_sq;
+    [SerializeField, Range(0f, 1f)]
+    float planeIdleAnimationProbability = 0.1f;
 
     public bool planeModeEnabled;
     public bool shouldJump;
@@ -58,6 +64,8 @@ public class ThirdPersonMovement : MonoBehaviour
 
             inputActions.WorldMovement.Move.performed += ctx => userMovement = ctx.ReadValue<Vector2>();
 
+            inputActions.WorldMovement.SwitchMoveAnimations.performed += ctx => SwitchMoveAnimations();
+
             inputActions.Enable();
         }
     }
@@ -65,24 +73,6 @@ public class ThirdPersonMovement : MonoBehaviour
     void OnDisable()
     {
         inputActions.Disable();
-    }
-
-    void PlaneModePressed()
-    {
-        planeModeEnabled = !planeModeEnabled;
-        shouldCrouch = false;
-        if (planeModeEnabled)
-        {
-            rb.useGravity = false;
-            wonkObject.SetActive(false);
-            planeObject.SetActive(true);
-        }
-        else
-        {
-            rb.useGravity = true;
-            wonkObject.SetActive(true);
-            planeObject.SetActive(false);
-        }
     }
 
     void Start()
@@ -95,8 +85,39 @@ public class ThirdPersonMovement : MonoBehaviour
 
         wonkObject = transform.Find("wonkyplayer").gameObject;
         planeObject = transform.Find("plane").gameObject;
+        planeExhaustObject = transform.Find("PlaneExhaust").gameObject;
         wonkAnimator = wonkObject.GetComponent<Animator>();
         planeAnimator = planeObject.GetComponent<Animator>();
+        planeSwitchTriggerID = Animator.StringToHash("SwitchMoveAnimations");
+        idleAnimationTriggerID = Animator.StringToHash("PlaneIdleVariationTrigger");
+    }
+
+    void SwitchMoveAnimations()
+    {
+        if (planeModeEnabled)
+        {
+            planeAnimator.SetTrigger(planeSwitchTriggerID);
+            // Debug.Log("Triggered plane switch anims");
+        }
+    }
+
+    void PlaneModePressed()
+    {
+        planeModeEnabled = !planeModeEnabled;
+        shouldCrouch = false;
+        if (planeModeEnabled)
+        {
+            rb.useGravity = false;
+            wonkObject.SetActive(false);
+            planeObject.SetActive(true);
+            planeExhaustObject.SetActive(true);
+        }
+        else
+        {
+            rb.useGravity = true;
+            wonkObject.SetActive(true);
+            planeExhaustObject.SetActive(false);
+        }
     }
 
 
@@ -135,8 +156,15 @@ public class ThirdPersonMovement : MonoBehaviour
         float currentSpeed = (new Vector2(vel.x, vel.z)).magnitude;
         float speedPct = Mathf.Clamp01(Mathf.InverseLerp(0, 70, currentSpeed));
         if (planeModeEnabled)
-            planeAnimator.SetFloat("Blend", speedPct);
+        {
+            planeAnimator.SetFloat("Speed", speedPct);
+            // Debug.Log("setting plane anim speed to " + speedPct);
+            if (Random.Range(0f, 1f) < planeIdleAnimationProbability * Time.deltaTime)
+                planeAnimator.SetTrigger(idleAnimationTriggerID);
+        }
         else
             wonkAnimator.SetFloat("SpeedPct", speedPct);
+
+
     }
 }

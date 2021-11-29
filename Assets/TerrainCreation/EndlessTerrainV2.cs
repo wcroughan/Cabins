@@ -277,15 +277,11 @@ public class TerrainChunk
             }
         }
 
-        if (chunkCoord == new Vector2(-19, 2))
-            Debug.Log("Requesting chunk data");
         EndlessTerrainV2.terrainGenerator.RequestNewChunkData(OnNewChunkDataReceived, centerLocation, EndlessTerrainV2.chunkSideLength);
     }
 
     private void OnNewChunkDataReceived(TerrainChunkData terrainChunkData)
     {
-        if (chunkCoord == new Vector2(-19, 2))
-            Debug.Log("Got chunk data");
         foreach (TerrainSection terrainSection in sections)
         {
             terrainSection.terrainChunkData = terrainChunkData;
@@ -507,8 +503,6 @@ public class TerrainChunk
             else if (!requestedMeshLOD[lod])
             {
                 requestedMeshLOD[lod] = true;
-                if (chunkCoord == new Vector2(-19, 2))
-                    Debug.Log("Requesting mesh data");
                 EndlessTerrainV2.terrainGenerator.RequestSectionMesh(OnMeshDataReceived, terrainChunkData, sectionCoord, EndlessTerrainV2.sectionSideLength, lod);
             }
 
@@ -516,8 +510,6 @@ public class TerrainChunk
 
         private void OnMeshDataReceived(TerrainSectionMeshData terrainSectionMeshData)
         {
-            if (chunkCoord == new Vector2(-19, 2))
-                Debug.Log("Received mesh data");
             meshes[terrainSectionMeshData.LOD] = terrainSectionMeshData.CreateMesh();
             hasMeshLOD[terrainSectionMeshData.LOD] = true;
             if (terrainSectionMeshData.LOD == currentLOD)

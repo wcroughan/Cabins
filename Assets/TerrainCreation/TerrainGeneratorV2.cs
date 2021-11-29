@@ -161,8 +161,6 @@ public class TerrainGeneratorV2 : MonoBehaviour
                 float highestRepresentedHeight = float.NegativeInfinity;
                 for (int b = 0; b < numBiomes; b++)
                 {
-                    if (perlinValuesOut != null)
-                        perlinValuesOut.Write(biomeCountWithinRadius[b] + " ");
                     int count = biomeCountWithinRadius[b];
                     if (count > 0 && Mathf.Abs(biomes[b].heightMultiplier) > highestRepresentedHeight)
                     {
@@ -173,11 +171,13 @@ public class TerrainGeneratorV2 : MonoBehaviour
                     heightMap[x, y] += allHeightMaps[x, y, ahmi] * (float)biomeCountWithinRadius[b] / radiusDenom;
 
                 }
+
                 if (perlinValuesOut != null)
-                    perlinValuesOut.WriteLine();
+                    perlinValuesOut.Write(chunkCenter.x + " " + chunkCenter.y + " " + x + " " + y + " " + heightMap[x, y] + " ");
             }
         }
-        // 
+        perlinValuesOut.WriteLine();
+
         Color[] colorMap = new Color[dim * dim];
         //copying gradients to new ones for thread safety
         Gradient[] gradients = new Gradient[numBiomes];
@@ -195,6 +195,7 @@ public class TerrainGeneratorV2 : MonoBehaviour
                 colorMap[x + y * dim] = gradients[texBiome].Evaluate(heightMap[x, y] / biomes[texBiome].heightMultiplier);
             }
         }
+
 
         return new TerrainChunkData(heightMap, chunkBiomeMap, colorMap, chunkSideLength, numMarginPts, chunkCenter);
     }

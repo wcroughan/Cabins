@@ -94,7 +94,7 @@ public class ThirdPersonMovement : MonoBehaviour
         rb.velocity = new Vector3(0f, 0f, 0.1f);
 
         wonkObject = transform.Find("wonkyplayer").gameObject;
-        planeObject = transform.Find("planemodel").gameObject;
+        planeObject = transform.Find("plane").gameObject;
         wonkAnimator = wonkObject.GetComponent<Animator>();
         planeAnimator = planeObject.GetComponent<Animator>();
     }
@@ -134,7 +134,9 @@ public class ThirdPersonMovement : MonoBehaviour
 
         float currentSpeed = (new Vector2(vel.x, vel.z)).magnitude;
         float speedPct = Mathf.Clamp01(Mathf.InverseLerp(0, 70, currentSpeed));
-        wonkAnimator.SetFloat("SpeedPct", speedPct);
-        planeAnimator.SetFloat("Blend", speedPct);
+        if (planeModeEnabled)
+            planeAnimator.SetFloat("Blend", speedPct);
+        else
+            wonkAnimator.SetFloat("SpeedPct", speedPct);
     }
 }

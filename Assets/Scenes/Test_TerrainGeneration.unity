@@ -38,7 +38,7 @@ RenderSettings:
   m_ReflectionIntensity: 1
   m_CustomReflection: {fileID: 0}
   m_Sun: {fileID: 0}
-  m_IndirectSpecularColor: {r: 0.44657898, g: 0.4964133, b: 0.5748178, a: 1}
+  m_IndirectSpecularColor: {r: 0.4465785, g: 0.49641252, b: 0.574817, a: 1}
   m_UseRadianceAmbientProbe: 0
 --- !u!157 &3
 LightmapSettings:
@@ -333,10 +333,10 @@ MonoBehaviour:
   autoUpdate: 0
   coord: {x: 0, y: 0}
   levelOfDetail: 0
-  sectionSize: 2
-  numChunksPerSide: 4
-  chunkSectionSubdivisions: 2
-  saveBiomeValsToFile: 0
+  sectionSize: 1
+  numChunksPerSide: 2
+  chunkSectionSubdivisions: 1
+  saveBiomeValsToFile: 1
 --- !u!114 &1891915099
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -350,7 +350,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   seed: 27
-  biomeMapNoiseScaleFactor: -7.95
+  biomeMapNoiseScaleFactor: -5
   biomeTransitionRadius: 15
   biomesInfo:
     biomeValueMap: {fileID: 2800000, guid: 7b811ba04cb4c44d39954161240dc519, type: 3}

@@ -429,6 +429,9 @@ public class TerrainChunk
             meshCollider.enabled = false;
             // meshObject.transform.position = positionV3;
             meshObject.transform.SetParent(parent, false);
+            Transform waterObject = meshObject.transform.Find("Water");
+            waterObject.position = positionV3;
+            waterObject.localScale = new Vector3(EndlessTerrainV2.sectionSideLength, EndlessTerrainV2.sectionSideLength, 1f);
         }
 
         private void UpdateTexture()

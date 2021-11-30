@@ -9,10 +9,11 @@ public class ThirdPersonMovement : MonoBehaviour
     Animator planeAnimator;
     GameObject wonkObject;
     GameObject planeObject;
-    GameObject planeExhaustObject;
+    GameObject waterTintObject;
 
     private int planeSwitchTriggerID;
     private int idleAnimationTriggerID;
+    private bool isUnderwater;
 
     Rigidbody rb;
     [SerializeField]
@@ -64,7 +65,7 @@ public class ThirdPersonMovement : MonoBehaviour
 
             inputActions.WorldMovement.Move.performed += ctx => userMovement = ctx.ReadValue<Vector2>();
 
-            inputActions.WorldMovement.SwitchMoveAnimations.performed += ctx => SwitchMoveAnimations();
+            // inputActions.WorldMovement.SwitchMoveAnimations.performed += ctx => SwitchMoveAnimations();
 
             inputActions.Enable();
         }
@@ -83,13 +84,19 @@ public class ThirdPersonMovement : MonoBehaviour
         rb = GetComponent<Rigidbody>();
         rb.velocity = new Vector3(0f, 0f, 0.1f);
 
-        wonkObject = transform.Find("wonkyplayer").gameObject;
-        planeObject = transform.Find("plane").gameObject;
-        planeExhaustObject = transform.Find("PlaneExhaust").gameObject;
-        wonkAnimator = wonkObject.GetComponent<Animator>();
-        planeAnimator = planeObject.GetComponent<Animator>();
+        wonkObject = transform.Find("WonkPlayer").gameObject;
+        planeObject = transform.Find("PlanePlayer").gameObject;
+        waterTintObject = Camera.main.transform.Find("TintOverlay").gameObject;
+        wonkAnimator = wonkObject.GetComponentInChildren<Animator>();
+        planeAnimator = planeObject.GetComponentInChildren<Animator>();
         planeSwitchTriggerID = Animator.StringToHash("SwitchMoveAnimations");
         idleAnimationTriggerID = Animator.StringToHash("PlaneIdleVariationTrigger");
+
+        isUnderwater = false;
+        waterTintObject.SetActive(false);
+
+        wonkObject.SetActive(true);
+        planeObject.SetActive(false);
     }
 
     void SwitchMoveAnimations()
@@ -110,13 +117,11 @@ public class ThirdPersonMovement : MonoBehaviour
             rb.useGravity = false;
             wonkObject.SetActive(false);
             planeObject.SetActive(true);
-            planeExhaustObject.SetActive(true);
         }
         else
         {
             rb.useGravity = true;
             wonkObject.SetActive(true);
-            planeExhaustObject.SetActive(false);
         }
     }
 
@@ -161,6 +166,20 @@ public class ThirdPersonMovement : MonoBehaviour
             // Debug.Log("setting plane anim speed to " + speedPct);
             if (Random.Range(0f, 1f) < planeIdleAnimationProbability * Time.deltaTime)
                 planeAnimator.SetTrigger(idleAnimationTriggerID);
+
+            //note obvious bug here that this won't work if player starts underwater...
+            if (transform.position.y < 0 && !isUnderwater)
+            {
+                isUnderwater = true;
+                SwitchMoveAnimations();
+                waterTintObject.SetActive(true);
+            }
+            else if (transform.position.y >= 0 && isUnderwater)
+            {
+                isUnderwater = false;
+                SwitchMoveAnimations();
+                waterTintObject.SetActive(false);
+            }
         }
         else
             wonkAnimator.SetFloat("SpeedPct", speedPct);

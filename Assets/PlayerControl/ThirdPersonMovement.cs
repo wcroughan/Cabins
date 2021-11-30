@@ -7,8 +7,10 @@ public class ThirdPersonMovement : MonoBehaviour
     InputActions inputActions;
     Animator wonkAnimator;
     Animator planeAnimator;
+    Animator slugAnimator;
     GameObject wonkObject;
     GameObject planeObject;
+    GameObject slugObject;
     GameObject waterTintObject;
 
     private int planeSwitchTriggerID;
@@ -86,17 +88,21 @@ public class ThirdPersonMovement : MonoBehaviour
 
         wonkObject = transform.Find("WonkPlayer").gameObject;
         planeObject = transform.Find("PlanePlayer").gameObject;
+        slugObject = transform.Find("SlugPlayer").gameObject;
         waterTintObject = Camera.main.transform.Find("TintOverlay").gameObject;
         wonkAnimator = wonkObject.GetComponentInChildren<Animator>();
         planeAnimator = planeObject.GetComponentInChildren<Animator>();
+        slugAnimator = slugObject.GetComponentInChildren<Animator>();
         planeSwitchTriggerID = Animator.StringToHash("SwitchMoveAnimations");
-        idleAnimationTriggerID = Animator.StringToHash("PlaneIdleVariationTrigger");
+        // idleAnimationTriggerID = Animator.StringToHash("PlaneIdleVariationTrigger");
+        idleAnimationTriggerID = Animator.StringToHash("IdleAnimation");
 
         isUnderwater = false;
         waterTintObject.SetActive(false);
 
         wonkObject.SetActive(true);
         planeObject.SetActive(false);
+        slugObject.SetActive(false);
     }
 
     void SwitchMoveAnimations()
@@ -116,12 +122,15 @@ public class ThirdPersonMovement : MonoBehaviour
         {
             rb.useGravity = false;
             wonkObject.SetActive(false);
-            planeObject.SetActive(true);
+            // planeObject.SetActive(true);
+            slugObject.SetActive(true);
         }
         else
         {
             rb.useGravity = true;
             wonkObject.SetActive(true);
+            // planeObject.SetActive(false);
+            slugObject.SetActive(false);
         }
     }
 
@@ -162,10 +171,14 @@ public class ThirdPersonMovement : MonoBehaviour
         float speedPct = Mathf.Clamp01(Mathf.InverseLerp(0, 70, currentSpeed));
         if (planeModeEnabled)
         {
-            planeAnimator.SetFloat("Speed", speedPct);
+            // planeAnimator.SetFloat("Speed", speedPct);
+            slugAnimator.SetFloat("Speed", speedPct);
             // Debug.Log("setting plane anim speed to " + speedPct);
             if (Random.Range(0f, 1f) < planeIdleAnimationProbability * Time.deltaTime)
-                planeAnimator.SetTrigger(idleAnimationTriggerID);
+            {
+                slugAnimator.SetTrigger(idleAnimationTriggerID);
+                // planeAnimator.SetTrigger(idleAnimationTriggerID);
+            }
 
             //note obvious bug here that this won't work if player starts underwater...
             if (transform.position.y < 0 && !isUnderwater)

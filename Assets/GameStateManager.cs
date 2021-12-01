@@ -11,6 +11,8 @@ public class GameStateManager : MonoBehaviour
 
     public static GameStateManager Instance { get; private set; }
 
+    InputActions inputActions;
+
     void Awake()
     {
         if (Instance == null)
@@ -26,6 +28,13 @@ public class GameStateManager : MonoBehaviour
     // Start is called before the first frame update
     void Start()
     {
+        if (inputActions == null)
+        {
+            inputActions = new InputActions();
+            inputActions.GameControl.Pause.performed += ctx => Debug.Break();
+            inputActions.GameControl.Pause.Enable();
+        }
+
         gameState = GameState.Loading;
         StartCoroutine(CheckIfTerrainLoaded());
     }

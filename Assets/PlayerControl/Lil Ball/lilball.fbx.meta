@@ -18,6 +18,12 @@ ModelImporter:
   - first:
       74: 2749255216220486769
     second: Sphere|Jump.003
+  - first:
+      74: 7176209919637214875
+    second: Action
+  - first:
+      74: 885944232402757753
+    second: Armature|Action
   externalObjects: {}
   materials:
     materialImportMode: 2

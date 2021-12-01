@@ -18,6 +18,9 @@ ModelImporter:
   - first:
       74: 8349542763059015795
     second: Armature|Walk
+  - first:
+      74: 8353871693841318008
+    second: Armature|TransitionToBall.001
   externalObjects: {}
   materials:
     materialImportMode: 2

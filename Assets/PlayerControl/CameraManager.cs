@@ -45,11 +45,10 @@ public class CameraManager : MonoBehaviour
         if (inputActions == null)
         {
             inputActions = new InputActions();
-
             inputActions.WorldMovement.Look.performed += ctx => lookInput = ctx.ReadValue<Vector2>();
-
-            inputActions.WorldMovement.Look.Enable();
         }
+
+        inputActions.WorldMovement.Look.Enable();
     }
 
     void OnDisable()

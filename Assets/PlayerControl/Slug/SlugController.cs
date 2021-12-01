@@ -8,13 +8,25 @@ public class SlugController : MonoBehaviour
     CameraManager cameraManager;
     [SerializeField]
     PlayerManager playerManager;
+    [SerializeField]
+    float speed;
+    [SerializeField]
+    float idleAnimationFrequency = 10f;
+    private float idleAnimationProbability;
 
-    InputActions inputActions;
+    private InputActions inputActions;
+    private Vector2 userMovementInput;
+    private Rigidbody rb;
+    private Animator animator;
+    private int idleAnimationTriggerID;
 
     // Start is called before the first frame update
     void Start()
     {
-
+        rb = GetComponent<Rigidbody>();
+        animator = GetComponentInChildren<Animator>();
+        idleAnimationTriggerID = Animator.StringToHash("IdleAnimationTrigger");
+        idleAnimationProbability = 1f / idleAnimationFrequency;
     }
 
     void OnEnable()
@@ -24,49 +36,41 @@ public class SlugController : MonoBehaviour
         {
             inputActions = new InputActions();
             inputActions.WorldMovement.Attack.performed += ctx => OnAttackPerformed();
-            inputActions.WorldMovement.Move.performed += ctx => OnMovePerformed();
+            inputActions.WorldMovement.Move.performed += ctx => userMovementInput = ctx.ReadValue<Vector2>();
         }
 
-        // inputActions.WorldMovement.Attack.performed -= ctx => OnAttackPerformed();
-        // inputActions.WorldMovement.Move.performed -= ctx => OnMovePerformed();
-        inputActions.WorldMovement.Look.Enable();
         inputActions.WorldMovement.Attack.Enable();
         inputActions.WorldMovement.Move.Enable();
-        // inputActions.Enable();
-        Debug.Log("Enabled input");
     }
 
     void OnDisable()
     {
-        inputActions.WorldMovement.Look.Disable();
         inputActions.WorldMovement.Attack.Disable();
         inputActions.WorldMovement.Move.Disable();
-        // inputActions.WorldMovement.Attack.performed -= ctx => OnAttackPerformed();
-        // inputActions.WorldMovement.Move.performed -= ctx => OnMovePerformed();
-        // inputActions.Disable();
-        // inputActions = null;
-        Debug.Log("The slug is becoming not active!");
     }
 
     void OnAttackPerformed()
     {
-        Debug.Log("Attack!");
-        playerManager.TransitionToNextPlayerObject();
+        animator.SetTrigger("TransitionToNextPlayer");
     }
 
-    void OnMovePerformed()
+    public void OnExitTransitionAnimationFinished()
     {
-        Debug.Log("Move!");
+        playerManager.TransitionToNextPlayerObject();
     }
 
     // Update is called once per frame
     void Update()
     {
-
+        animator.SetFloat("Speed", rb.velocity.magnitude);
+        if (Random.Range(0f, 1f) < idleAnimationProbability * Time.deltaTime)
+        {
+            animator.SetTrigger(idleAnimationTriggerID);
+        }
     }
 
     void FixedUpdate()
     {
-
+        rb.AddForce(new Vector3(userMovementInput.x, 0f, userMovementInput.y) * speed, ForceMode.VelocityChange);
     }
 }

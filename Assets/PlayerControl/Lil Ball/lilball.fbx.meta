@@ -1,11 +1,23 @@
 fileFormatVersion: 2
-guid: 314e0591df7aca429a8b3210700cd77e
+guid: dbde626656425a970b37d700c2d0f554
 ModelImporter:
   serializedVersion: 20200
   internalIDToNameTable:
   - first:
-      74: -623603649343465320
-    second: Scene
+      74: 7977981595123510903
+    second: Sphere|Jump.001
+  - first:
+      74: -1704441639498659276
+    second: Jump.003
+  - first:
+      74: -1230907559298681181
+    second: Armature|Jump.003
+  - first:
+      74: 5217001322617888900
+    second: Jump.004
+  - first:
+      74: 2749255216220486769
+    second: Sphere|Jump.003
   externalObjects: {}
   materials:
     materialImportMode: 2

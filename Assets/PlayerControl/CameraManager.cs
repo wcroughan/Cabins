@@ -15,10 +15,11 @@ public class CameraManager : MonoBehaviour
     [SerializeField]
     float minVertAngle = -35f, maxVertAngle = 35f;
     [SerializeField]
-    float defaultCameraFollowDistance = 4.25f;
+    public float defaultCameraFollowDistance = 4.25f;
     [SerializeField]
     LayerMask collisionLayers;
 
+    [SerializeField]
     Transform player;
     InputActions inputActions;
 
@@ -35,7 +36,7 @@ public class CameraManager : MonoBehaviour
     // Start is called before the first frame update
     void Start()
     {
-        player = FindObjectOfType<ThirdPersonMovement>().transform;
+        // player = FindObjectOfType<ThirdPersonMovement>().transform;
     }
 
     void OnEnable()

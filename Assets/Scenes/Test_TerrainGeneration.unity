@@ -333,8 +333,8 @@ MonoBehaviour:
   autoUpdate: 0
   coord: {x: 0, y: 0}
   levelOfDetail: 0
-  sectionSize: 3
-  numChunksPerSide: 5
+  sectionSize: 2
+  numChunksPerSide: 1
   chunkSectionSubdivisions: 2
   saveBiomeValsToFile: 0
 --- !u!114 &1891915099
@@ -391,7 +391,6 @@ MonoBehaviour:
       biome: {fileID: 11400000, guid: 9ac221ab1b6ebdb4aa65681f8027928a, type: 2}
     - colorVal: 207
       biome: {fileID: 11400000, guid: 3a55a47ac63c59c5c9c0b621ea979dba, type: 2}
-    perlinRemapTextFile: {fileID: 4900000, guid: 130658dec6504b135856d003f1dbe8a1, type: 3}
     overrideMapWithValue: 0
     overrideValue: 1
 --- !u!4 &1891915100

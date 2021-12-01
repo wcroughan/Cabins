@@ -399,14 +399,9 @@ public class TerrainGeneratorV2 : MonoBehaviour
         [SerializeField]
         BiomeKeyEntry[] mapKeys;
         [SerializeField]
-        TextAsset perlinRemapTextFile;
-        [SerializeField]
         bool overrideMapWithValue;
         [SerializeField]
         int overrideValue;
-
-
-        private float[] remapValues;
 
         private int numPrintedWarnings;
 
@@ -415,25 +410,10 @@ public class TerrainGeneratorV2 : MonoBehaviour
 
         public void InitSelector()
         {
-            LoadRemapValues();
+            numPrintedWarnings = 0;
             textureWidth = biomeValueMap.width;
             textureHeight = biomeValueMap.height;
             biomeValues = biomeValueMap.GetPixels(0, 0, textureWidth, textureHeight);
-        }
-
-        public void LoadRemapValues()
-        {
-            string remapTxt = perlinRemapTextFile.text;
-            string[] lines = remapTxt.Split('\n');
-            remapValues = new float[lines.Length];
-            for (int i = 0; i < lines.Length; i++)
-            {
-                if (lines[i].Equals(""))
-                    break;
-                remapValues[i] = float.Parse(lines[i], System.Globalization.NumberStyles.Float | System.Globalization.NumberStyles.AllowExponent);
-            }
-
-            numPrintedWarnings = 0;
         }
 
         public int GetBiomeForVals(float v1, float v2)
@@ -441,12 +421,8 @@ public class TerrainGeneratorV2 : MonoBehaviour
             if (overrideMapWithValue)
                 return overrideValue;
 
-            // float rv1 = remapValues[Mathf.RoundToInt(v1 * (remapValues.Length - 1))];
-            // float rv2 = remapValues[Mathf.RoundToInt(v2 * (remapValues.Length - 1))];
-            float rv1 = v1;
-            float rv2 = v2;
-            int x = Mathf.RoundToInt(rv1 * (textureWidth - 1));
-            int y = Mathf.RoundToInt(rv2 * (textureHeight - 1));
+            int x = Mathf.RoundToInt(v1 * (textureWidth - 1));
+            int y = Mathf.RoundToInt(v2 * (textureHeight - 1));
             Color c = biomeValues[x + textureWidth * y];
             int cval = Mathf.RoundToInt(c.r * 255);
             // int cval = v1 > v2 ? 0 : 1;
@@ -458,7 +434,7 @@ public class TerrainGeneratorV2 : MonoBehaviour
 
 
             if (numPrintedWarnings++ < 10)
-                Debug.LogWarning(string.Format("Couldn't get biome: v1={0}, v2={1}, rv1={2}, rv2={3}, c={4}, cval={5}", v1, v2, rv1, rv2, c, cval));
+                Debug.LogWarning(string.Format("Couldn't get biome: v1={0}, v2={1}, c={2}, cval={3}", v1, v2, c, cval));
 
             return -1;
         }

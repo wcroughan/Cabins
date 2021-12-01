@@ -4,7 +4,7 @@ using UnityEngine;
 using System.IO;
 
 [CreateAssetMenu(menuName = "Biomes/Biome")]
-public class Biome : UpdatableTerrainInfo
+public class Biome : ScriptableObject
 {
     [SerializeField, Range(1, 5)]
     public int numNoiseScales = 3;

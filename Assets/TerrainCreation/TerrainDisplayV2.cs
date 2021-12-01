@@ -35,9 +35,6 @@ public class TerrainDisplayV2 : MonoBehaviour
     // Start is called before the first frame update
     void Update()
     {
-        numSectionsPerDim = Mathf.RoundToInt(Mathf.Pow(2f, chunkSectionSubdivisions));
-        chunkSize = numSectionsPerDim * 24 * sectionSize;
-        terrainGenerator = FindObjectOfType<TerrainGeneratorV2>();
     }
 
     public void ClearChildren()
@@ -59,6 +56,10 @@ public class TerrainDisplayV2 : MonoBehaviour
 
     public void RemakeTerrain()
     {
+        numSectionsPerDim = Mathf.RoundToInt(Mathf.Pow(2f, chunkSectionSubdivisions));
+        chunkSize = numSectionsPerDim * 24 * sectionSize;
+        terrainGenerator = FindObjectOfType<TerrainGeneratorV2>();
+
         sw1 = new Stopwatch();
         sw2 = new Stopwatch();
         sw1.Reset();

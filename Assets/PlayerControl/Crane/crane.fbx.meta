@@ -12,6 +12,63 @@ ModelImporter:
   - first:
       74: 257234633528622921
     second: Armature|ReachNGrab
+  - first:
+      74: 8842154068014033266
+    second: IdleFlavor
+  - first:
+      74: -3100369314251171874
+    second: Idle
+  - first:
+      74: -2341027594253812581
+    second: Roll
+  - first:
+      74: -3111493888207681714
+    second: Eat.001
+  - first:
+      74: 8979269963596733007
+    second: Retract
+  - first:
+      74: -6993101219729967766
+    second: Rotate
+  - first:
+      74: 8800204070928625417
+    second: Lunge.001
+  - first:
+      74: 885944232402757753
+    second: Armature|Action
+  - first:
+      74: 5781299004578296003
+    second: Armature|Eat.001
+  - first:
+      74: -8945691123924629249
+    second: Armature|Idle
+  - first:
+      74: 2219341303021308552
+    second: Armature|IdleFlavor
+  - first:
+      74: 9180454754799843049
+    second: Armature|Lunge
+  - first:
+      74: 2287988286240862470
+    second: Armature|Lunge.001
+  - first:
+      74: -8372676092193323759
+    second: Armature|Retract
+  - first:
+      74: 3031411921458128146
+    second: Armature|Roll
+  - first:
+      74: 8322557244915790249
+    second: Armature|Rotate
+  - first:
+      74: -4375614354798123471
+    second: NoPose
+  - first:
+      74: -8359226993953521689
+    second: Armature|NoPose
+  - first:
+      74: -8051102449201487124
+    second: Cube|Action
   externalObjects: {}
   materials:
     materialImportMode: 2
@@ -32,7 +89,7 @@ ModelImporter:
     animationDoRetargetingWarnings: 0
     importAnimatedCustomProperties: 0
     importConstraints: 0
-    animationCompression: 1
+    animationCompression: 3
     animationRotationError: 0.5
     animationPositionError: 0.5
     animationScaleError: 0.5
@@ -48,10 +105,10 @@ ModelImporter:
     addColliders: 0
     useSRGBMaterialColor: 1
     sortHierarchyByName: 1
-    importVisibility: 1
+    importVisibility: 0
     importBlendShapes: 1
-    importCameras: 1
-    importLights: 1
+    importCameras: 0
+    importLights: 0
     fileIdsGeneration: 2
     swapUVChannels: 0
     generateSecondaryUV: 0
@@ -75,7 +132,7 @@ ModelImporter:
     useFileScale: 1
   tangentSpace:
     normalSmoothAngle: 60
-    normalImportMode: 0
+    normalImportMode: 1
     tangentImportMode: 3
     normalCalculationMode: 4
     legacyComputeAllNormalsFromSmoothingGroupsWhenMeshHasBlendShapes: 0
@@ -95,9 +152,9 @@ ModelImporter:
     legStretch: 0.05
     feetSpacing: 0
     globalScale: 1
-    rootMotionBoneName: 
+    rootMotionBoneName: Root
     hasTranslationDoF: 0
-    hasExtraRoot: 0
+    hasExtraRoot: 1
     skeletonHasParents: 1
   lastHumanDescriptionAvatarSource: {instanceID: 0}
   autoGenerateAvatarMappingIfUnspecified: 1

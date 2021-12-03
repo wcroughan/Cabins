@@ -9,6 +9,9 @@ ModelImporter:
   - first:
       74: 257234633528622921
     second: Armature|ReachNGrab
+  - first:
+      74: -623603649343465320
+    second: Scene
   externalObjects: {}
   materials:
     materialImportMode: 2

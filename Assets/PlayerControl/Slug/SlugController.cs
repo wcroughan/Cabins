@@ -2,36 +2,33 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
+[RequireComponent(typeof(SlugMotor))]
 public class SlugController : MonoBehaviour
 {
     [SerializeField]
-    CameraManager cameraManager;
-    [SerializeField]
     PlayerManager playerManager;
-    [SerializeField]
-    float speed;
-    [SerializeField]
-    float idleAnimationFrequency = 10f;
-    private float idleAnimationProbability;
 
+    [SerializeField]
+    List<GameObject> targets;
+    private GameObject nextTarget;
+    private int nextTargetIdx;
+
+    float counter = 0;
+
+    private SlugMotor motor;
     private InputActions inputActions;
     private Vector2 userMovementInput;
-    private Rigidbody rb;
-    private Animator animator;
-    private int idleAnimationTriggerID;
+    private bool shouldAttack;
 
     // Start is called before the first frame update
     void Start()
     {
-        rb = GetComponent<Rigidbody>();
-        animator = GetComponentInChildren<Animator>();
-        idleAnimationTriggerID = Animator.StringToHash("IdleAnimationTrigger");
-        idleAnimationProbability = 1f / idleAnimationFrequency;
+        motor = GetComponent<SlugMotor>();
     }
 
     void OnEnable()
     {
-        Debug.Log("The slug is becoming active!");
+        Debug.Log("The player slug is becoming active!");
         if (inputActions == null)
         {
             inputActions = new InputActions();
@@ -41,6 +38,7 @@ public class SlugController : MonoBehaviour
 
         inputActions.WorldMovement.Attack.Enable();
         inputActions.WorldMovement.Move.Enable();
+        shouldAttack = false;
     }
 
     void OnDisable()
@@ -51,7 +49,11 @@ public class SlugController : MonoBehaviour
 
     void OnAttackPerformed()
     {
-        animator.SetTrigger("TransitionToNextPlayer");
+        // animator.SetTrigger("TransitionToNextPlayer");
+        shouldAttack = true;
+        nextTarget = targets[nextTargetIdx++];
+        if (nextTargetIdx >= targets.Count)
+            nextTargetIdx = 0;
     }
 
     public void OnExitTransitionAnimationFinished()
@@ -62,15 +64,37 @@ public class SlugController : MonoBehaviour
     // Update is called once per frame
     void Update()
     {
-        animator.SetFloat("Speed", rb.velocity.magnitude);
-        if (Random.Range(0f, 1f) < idleAnimationProbability * Time.deltaTime)
+        counter += Time.deltaTime;
+        if (counter > 3)
         {
-            animator.SetTrigger(idleAnimationTriggerID);
+            counter = 0;
+            shouldAttack = true;
+            nextTarget = targets[nextTargetIdx++];
+            if (nextTargetIdx >= targets.Count)
+                nextTargetIdx = 0;
         }
-    }
 
-    void FixedUpdate()
-    {
-        rb.AddForce(new Vector3(userMovementInput.x, 0f, userMovementInput.y) * speed, ForceMode.VelocityChange);
+        if (shouldAttack)
+        {
+            shouldAttack = false;
+            motor.SetNextLungeTarget(nextTarget);
+            motor.PerformAction(SlugMotor.SlugAction.Lunge);
+        }
+        else if (userMovementInput.y > 0)
+        {
+            motor.PerformAction(SlugMotor.SlugAction.MoveForward);
+        }
+        else if (userMovementInput.y < 0)
+        {
+            motor.PerformAction(SlugMotor.SlugAction.MoveBackward);
+        }
+        else if (userMovementInput.x > 0)
+        {
+            motor.PerformAction(SlugMotor.SlugAction.TurnRight);
+        }
+        else if (userMovementInput.x < 0)
+        {
+            motor.PerformAction(SlugMotor.SlugAction.TurnLeft);
+        }
     }
 }

@@ -1,29 +1,56 @@
 fileFormatVersion: 2
-guid: dbde626656425a970b37d700c2d0f554
+guid: 42c89e91816ef4e1e97d6f8def49e7ba
 ModelImporter:
   serializedVersion: 20200
   internalIDToNameTable:
   - first:
-      74: 7977981595123510903
-    second: Sphere|Jump.001
+      74: -4375614354798123471
+    second: NoPose
   - first:
-      74: -1704441639498659276
-    second: Jump.003
+      74: -3100369314251171874
+    second: Idle
   - first:
-      74: -1230907559298681181
-    second: Armature|Jump.003
+      74: 8842154068014033266
+    second: IdleFlavor
   - first:
-      74: 5217001322617888900
-    second: Jump.004
+      74: -2341027594253812581
+    second: Roll
   - first:
-      74: 2749255216220486769
-    second: Sphere|Jump.003
+      74: -3111493888207681714
+    second: Eat.001
   - first:
-      74: 7176209919637214875
-    second: Action
+      74: 8979269963596733007
+    second: Retract
   - first:
-      74: 885944232402757753
-    second: Armature|Action
+      74: -6993101219729967766
+    second: Rotate
+  - first:
+      74: 8800204070928625417
+    second: Lunge.001
+  - first:
+      74: 5781299004578296003
+    second: Armature|Eat.001
+  - first:
+      74: -8945691123924629249
+    second: Armature|Idle
+  - first:
+      74: 2219341303021308552
+    second: Armature|IdleFlavor
+  - first:
+      74: 9180454754799843049
+    second: Armature|Lunge
+  - first:
+      74: -8359226993953521689
+    second: Armature|NoPose
+  - first:
+      74: -8372676092193323759
+    second: Armature|Retract
+  - first:
+      74: 3031411921458128146
+    second: Armature|Roll
+  - first:
+      74: 8322557244915790249
+    second: Armature|Rotate
   externalObjects: {}
   materials:
     materialImportMode: 2
@@ -55,7 +82,7 @@ ModelImporter:
     isReadable: 0
   meshes:
     lODScreenPercentages: []
-    globalScale: 0.1
+    globalScale: 1
     meshCompression: 0
     addColliders: 0
     useSRGBMaterialColor: 1
@@ -106,7 +133,7 @@ ModelImporter:
     armStretch: 0.05
     legStretch: 0.05
     feetSpacing: 0
-    globalScale: 0.001
+    globalScale: 1
     rootMotionBoneName: 
     hasTranslationDoF: 0
     hasExtraRoot: 0

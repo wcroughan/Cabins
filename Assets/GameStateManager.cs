@@ -7,7 +7,7 @@ public class GameStateManager : MonoBehaviour
     public enum GameState { Loading, Playing }
     public GameState gameState { get; private set; }
 
-    public System.Action<GameState> OnGameStateChanged;
+    public event System.Action<GameState> OnGameStateChanged;
 
     public static GameStateManager Instance { get; private set; }
 

@@ -15,6 +15,9 @@ ModelImporter:
   - first:
       74: 2749255216220486769
     second: Sphere|Jump.003
+  - first:
+      74: -623603649343465320
+    second: Scene
   externalObjects: {}
   materials:
     materialImportMode: 2

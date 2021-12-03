@@ -1,29 +1,11 @@
 fileFormatVersion: 2
-guid: dbde626656425a970b37d700c2d0f554
+guid: feda399895abb2ef4abbe928540251c8
 ModelImporter:
   serializedVersion: 20200
   internalIDToNameTable:
   - first:
-      74: 7977981595123510903
-    second: Sphere|Jump.001
-  - first:
-      74: -1704441639498659276
-    second: Jump.003
-  - first:
-      74: -1230907559298681181
-    second: Armature|Jump.003
-  - first:
-      74: 5217001322617888900
-    second: Jump.004
-  - first:
-      74: 2749255216220486769
-    second: Sphere|Jump.003
-  - first:
-      74: 7176209919637214875
-    second: Action
-  - first:
-      74: 885944232402757753
-    second: Armature|Action
+      74: -623603649343465320
+    second: Scene
   externalObjects: {}
   materials:
     materialImportMode: 2
@@ -55,7 +37,7 @@ ModelImporter:
     isReadable: 0
   meshes:
     lODScreenPercentages: []
-    globalScale: 0.1
+    globalScale: 1
     meshCompression: 0
     addColliders: 0
     useSRGBMaterialColor: 1
@@ -106,7 +88,7 @@ ModelImporter:
     armStretch: 0.05
     legStretch: 0.05
     feetSpacing: 0
-    globalScale: 0.001
+    globalScale: 1
     rootMotionBoneName: 
     hasTranslationDoF: 0
     hasExtraRoot: 0

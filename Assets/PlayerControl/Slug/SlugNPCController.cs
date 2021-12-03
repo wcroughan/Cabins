@@ -5,9 +5,6 @@ using UnityEngine;
 [RequireComponent(typeof(SlugMotor))]
 public class SlugNPCController : MonoBehaviour
 {
-    [SerializeField]
-    PlayerManager playerManager;
-
     private SlugMotor motor;
     private Vector2 userMovementInput;
 
@@ -29,6 +26,7 @@ public class SlugNPCController : MonoBehaviour
     // Update is called once per frame
     void Update()
     {
-        motor.PerformAction(SlugMotor.SlugAction.MoveForward);
+        // motor.PerformAction(SlugMotor.SlugAction.MoveForward);
+        motor.PerformAction(SlugMotor.SlugAction.TurnLeft);
     }
 }

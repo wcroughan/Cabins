@@ -9,11 +9,10 @@ public class SlugController : MonoBehaviour
     PlayerManager playerManager;
 
     [SerializeField]
-    List<GameObject> targets;
+    float targetSearchRadius;
+    [SerializeField]
+    float targetMaxAngle;
     private GameObject nextTarget;
-    private int nextTargetIdx;
-
-    float counter = 0;
 
     private SlugMotor motor;
     private InputActions inputActions;
@@ -49,11 +48,36 @@ public class SlugController : MonoBehaviour
 
     void OnAttackPerformed()
     {
-        // animator.SetTrigger("TransitionToNextPlayer");
-        shouldAttack = true;
-        nextTarget = targets[nextTargetIdx++];
-        if (nextTargetIdx >= targets.Count)
-            nextTargetIdx = 0;
+        //look for possible targets
+
+        Collider[] possibleTargets = Physics.OverlapSphere(transform.position, targetSearchRadius);
+        float minDist = float.PositiveInfinity;
+        nextTarget = null;
+        for (int i = 0; i < possibleTargets.Length; i++)
+        {
+            Transform t = possibleTargets[i].transform;
+            Vector3 d = t.position - transform.position;
+            if (d == Vector3.zero)
+            {
+                continue;
+            }
+            float a = Vector3.Angle(transform.forward, d);
+            if (a < targetMaxAngle)
+            {
+                float dds = d.sqrMagnitude;
+                if (dds < minDist)
+                {
+                    nextTarget = possibleTargets[i].gameObject;
+                    minDist = dds;
+                }
+            }
+
+        }
+
+        if (nextTarget != null)
+        {
+            shouldAttack = true;
+        }
     }
 
     public void OnExitTransitionAnimationFinished()
@@ -61,18 +85,16 @@ public class SlugController : MonoBehaviour
         playerManager.TransitionToNextPlayerObject();
     }
 
+    void OnDrawGizmos()
+    {
+        Gizmos.color = Color.yellow;
+        // Gizmos.DrawWireSphere(transform.position, targetSearchRadius);
+        Gizmos.DrawFrustum(transform.position, targetMaxAngle, targetSearchRadius, 0, 1f);
+    }
+
     // Update is called once per frame
     void Update()
     {
-        counter += Time.deltaTime;
-        if (counter > 3)
-        {
-            counter = 0;
-            shouldAttack = true;
-            nextTarget = targets[nextTargetIdx++];
-            if (nextTargetIdx >= targets.Count)
-                nextTargetIdx = 0;
-        }
 
         if (shouldAttack)
         {

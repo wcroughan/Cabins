@@ -7,9 +7,6 @@ using UnityEngine;
 public class SlugMotor : MonoBehaviour
 {
     [SerializeField]
-    SlugMotorStats stats;
-
-    [SerializeField]
     bool performIdleAnimations;
     [SerializeField]
     int numIdleAnimations = 1;
@@ -24,13 +21,17 @@ public class SlugMotor : MonoBehaviour
     private bool waitingOnPreviousActionAnimation;
 
     [SerializeField]
-    private float lungeSmoothVal = 1f;
+    private float timeToReachTarget = 1f;
     [SerializeField]
     private float destroyThreshold = 1;
+    [SerializeField]
+    private float lungeTargetOffset = 1;
     private Vector3 smoothDampVelocity = Vector3.zero;
-    private Vector3 targetVelocity;
     private bool isLunging = false;
     private GameObject lungeTarget;
+    private float timeIntoLunge = 0;
+    private Vector3 lungeEndPosition;
+    private Vector3 lungeStartPosition;
 
     private Animator animator;
     private Rigidbody rb;
@@ -59,7 +60,8 @@ public class SlugMotor : MonoBehaviour
 
     public void SetNextLungeTarget(GameObject target)
     {
-        lungeTarget = target;
+        if (!isLunging)
+            lungeTarget = target;
     }
 
     public void PerformAction(SlugAction action)
@@ -70,7 +72,7 @@ public class SlugMotor : MonoBehaviour
 
     void Update()
     {
-        if (performIdleAnimations && Random.Range(0f, 1f) < idleAnimationProbability * Time.deltaTime)
+        if (performIdleAnimations && !waitingOnPreviousActionAnimation && Random.Range(0f, 1f) < idleAnimationProbability * Time.deltaTime)
         {
             animator.SetInteger(idleAnimationIndexID, Random.Range(0, numIdleAnimations));
             animator.SetTrigger(idleAnimationTriggerID);
@@ -90,33 +92,26 @@ public class SlugMotor : MonoBehaviour
     public void OnLungeAnimationFinished()
     {
         waitingOnPreviousActionAnimation = false;
-        isLunging = false;
         rb.isKinematic = false;
         capsuleCollider.enabled = true;
     }
 
     void FixedUpdate()
     {
-        //TODO:
-        //when choosing target, run a capsulecast in physics to make sure can get there unobstructed. Maybe raycast for low bumps?
-        // store target position before destroying object, or just stop updating lunging stuff once destroyed
-        //Every other target is briefly approached and then canceled, maybe aproblem here or in controller script
-
+        timeIntoLunge += Time.deltaTime;
         if (isLunging)
         {
-            Vector3 vToTarget = lungeTarget.transform.position - transform.position;
-            if (vToTarget.sqrMagnitude < destroyThreshold * destroyThreshold)
+            float lval = Mathf.InverseLerp(0, timeToReachTarget, timeIntoLunge);
+            if (lval >= 1)
             {
+                isLunging = false;
+                rb.MovePosition(lungeEndPosition);
                 Destroy(lungeTarget);
             }
-            targetVelocity = (vToTarget).normalized;
-            // rb.AddForce(Vector3.SmoothDamp(rb.velocity, targetVelocity, ref smoothDampVelocity, lungeSmoothVal));
-            // rb.velocity = Vector3.SmoothDamp(rb.velocity, targetVelocity, ref smoothDampVelocity, lungeSmoothVal);
-            // rb.position = Vector3.Lerp(rb.position, lungeTarget.position, Time.deltaTime * lungeSmoothVal);
-            // rb.MovePosition(Vector3.Lerp(rb.position, lungeTarget.position, Time.deltaTime * lungeSmoothVal));
-            // rb.MovePosition(Vector3.SmoothDamp(rb.position, lungeTarget.position, ref smoothDampVelocity, lungeSmoothVal));
-            rb.MovePosition(rb.position + targetVelocity * lungeSmoothVal * Time.deltaTime);
-
+            else
+            {
+                rb.MovePosition(Vector3.Lerp(lungeStartPosition, lungeEndPosition, lval));
+            }
         }
 
         if (waitingOnPreviousActionAnimation)
@@ -127,23 +122,24 @@ public class SlugMotor : MonoBehaviour
         if (nextAction != null)
         {
             Debug.Log($"Slug doing {nextAction}");
-            //animation
+            //if we're just moving, root node movement will take care of that
             animator.SetTrigger(animatorTriggerKeys[nextAction]);
 
-            //if we're just moving, root node movement will take care of that
             if (nextAction == SlugAction.Lunge)
             {
                 isLunging = true;
                 rb.isKinematic = true;
                 capsuleCollider.enabled = false;
+                Vector3 targetPosition = lungeTarget.transform.position;
+                lungeStartPosition = transform.position;
+                Vector3 vecToTarget = (targetPosition - lungeStartPosition).normalized;
+                lungeEndPosition = targetPosition - vecToTarget * lungeTargetOffset;
+
+                timeIntoLunge = 0;
             }
 
             nextAction = null;
             waitingOnPreviousActionAnimation = true;
-        }
-        else
-        {
-
         }
     }
 }

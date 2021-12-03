@@ -1,41 +1,11 @@
 fileFormatVersion: 2
-guid: e7cb7e6a79e3f63a69531e2e9954be7a
+guid: 8e03429af69d840f2aad053ba9d69ade
 ModelImporter:
   serializedVersion: 20200
   internalIDToNameTable:
   - first:
-      74: 2135907463892932737
-    second: Armature|Spring
-  - first:
-      74: 257234633528622921
-    second: Armature|ReachNGrab
-  - first:
-      74: -623603649343465320
-    second: Scene
-  - first:
-      74: 5781299004578296003
-    second: Armature|Eat.001
-  - first:
-      74: -8945691123924629249
-    second: Armature|Idle
-  - first:
-      74: 2219341303021308552
-    second: Armature|IdleFlavor
-  - first:
-      74: 9180454754799843049
-    second: Armature|Lunge
-  - first:
-      74: -8359226993953521689
-    second: Armature|NoPose
-  - first:
-      74: -8372676092193323759
-    second: Armature|Retract
-  - first:
-      74: 3031411921458128146
-    second: Armature|Roll
-  - first:
-      74: 8322557244915790249
-    second: Armature|Rotate
+      74: 885944232402757753
+    second: Armature|Action
   externalObjects: {}
   materials:
     materialImportMode: 2

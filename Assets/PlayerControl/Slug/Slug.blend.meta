@@ -21,6 +21,12 @@ ModelImporter:
   - first:
       74: 8353871693841318008
     second: Armature|TransitionToBall.001
+  - first:
+      74: 8766176269458174082
+    second: Armature|Turn
+  - first:
+      74: 7855619899660676045
+    second: Armature|TurnLeft
   externalObjects: {}
   materials:
     materialImportMode: 2

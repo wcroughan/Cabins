@@ -1,41 +1,11 @@
 fileFormatVersion: 2
-guid: e7cb7e6a79e3f63a69531e2e9954be7a
+guid: 7b3a28569cd87b3d79ad506e07eb6604
 ModelImporter:
   serializedVersion: 20200
   internalIDToNameTable:
   - first:
-      74: 2135907463892932737
-    second: Armature|Spring
-  - first:
-      74: 257234633528622921
-    second: Armature|ReachNGrab
-  - first:
-      74: -623603649343465320
-    second: Scene
-  - first:
-      74: 5781299004578296003
-    second: Armature|Eat.001
-  - first:
-      74: -8945691123924629249
-    second: Armature|Idle
-  - first:
-      74: 2219341303021308552
-    second: Armature|IdleFlavor
-  - first:
-      74: 9180454754799843049
-    second: Armature|Lunge
-  - first:
-      74: -8359226993953521689
-    second: Armature|NoPose
-  - first:
-      74: -8372676092193323759
-    second: Armature|Retract
-  - first:
-      74: 3031411921458128146
-    second: Armature|Roll
-  - first:
-      74: 8322557244915790249
-    second: Armature|Rotate
+      74: 7176209919637214875
+    second: Action
   externalObjects: {}
   materials:
     materialImportMode: 2
@@ -56,14 +26,43 @@ ModelImporter:
     animationDoRetargetingWarnings: 0
     importAnimatedCustomProperties: 0
     importConstraints: 0
-    animationCompression: 1
+    animationCompression: 3
     animationRotationError: 0.5
     animationPositionError: 0.5
     animationScaleError: 0.5
     animationWrapMode: 0
     extraExposedTransformPaths: []
     extraUserProperties: []
-    clipAnimations: []
+    clipAnimations:
+    - serializedVersion: 16
+      name: Action
+      takeName: Action
+      internalID: 0
+      firstFrame: 0
+      lastFrame: 30
+      wrapMode: 0
+      orientationOffsetY: 0
+      level: 0
+      cycleOffset: 0
+      loop: 0
+      hasAdditiveReferencePose: 0
+      loopTime: 0
+      loopBlend: 0
+      loopBlendOrientation: 0
+      loopBlendPositionY: 1
+      loopBlendPositionXZ: 0
+      keepOriginalOrientation: 0
+      keepOriginalPositionY: 1
+      keepOriginalPositionXZ: 0
+      heightFromFeet: 0
+      mirror: 0
+      bodyMask: 01000000010000000100000001000000010000000100000001000000010000000100000001000000010000000100000001000000
+      curves: []
+      events: []
+      transformMask: []
+      maskType: 3
+      maskSource: {instanceID: 0}
+      additiveReferencePoseFrame: 0
     isReadable: 0
   meshes:
     lODScreenPercentages: []
@@ -82,7 +81,7 @@ ModelImporter:
     useFileUnits: 1
     keepQuads: 0
     weldVertices: 1
-    bakeAxisConversion: 0
+    bakeAxisConversion: 1
     preserveHierarchy: 0
     skinWeightsMode: 0
     maxBonesPerVertex: 4
@@ -119,15 +118,15 @@ ModelImporter:
     legStretch: 0.05
     feetSpacing: 0
     globalScale: 1
-    rootMotionBoneName: 
+    rootMotionBoneName: Root
     hasTranslationDoF: 0
-    hasExtraRoot: 0
+    hasExtraRoot: 1
     skeletonHasParents: 1
   lastHumanDescriptionAvatarSource: {instanceID: 0}
   autoGenerateAvatarMappingIfUnspecified: 1
   animationType: 2
   humanoidOversampling: 1
-  avatarSetup: 0
+  avatarSetup: 1
   addHumanoidExtraRootOnlyWhenUsingAvatar: 1
   additionalBone: 0
   userData: 

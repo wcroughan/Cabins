@@ -9,9 +9,7 @@ public class SlugController : MonoBehaviour
     PlayerManager playerManager;
 
     [SerializeField]
-    float targetSearchRadius;
-    [SerializeField]
-    float targetMaxAngle;
+    SlugStats stats;
     private GameObject nextTarget;
 
     private SlugMotor motor;
@@ -19,8 +17,7 @@ public class SlugController : MonoBehaviour
     private Vector2 userMovementInput;
     private bool shouldAttack;
 
-    // Start is called before the first frame update
-    void Start()
+    void Awake()
     {
         motor = GetComponent<SlugMotor>();
     }
@@ -49,8 +46,16 @@ public class SlugController : MonoBehaviour
     void OnAttackPerformed()
     {
         //look for possible targets
+        SelectNextTarget();
+        if (nextTarget != null)
+        {
+            shouldAttack = true;
+        }
+    }
 
-        Collider[] possibleTargets = Physics.OverlapSphere(transform.position, targetSearchRadius);
+    private void SelectNextTarget()
+    {
+        Collider[] possibleTargets = Physics.OverlapSphere(transform.position, stats.targetSearchRadius);
         float minDist = float.PositiveInfinity;
         nextTarget = null;
         for (int i = 0; i < possibleTargets.Length; i++)
@@ -62,7 +67,7 @@ public class SlugController : MonoBehaviour
                 continue;
             }
             float a = Vector3.Angle(transform.forward, d);
-            if (a < targetMaxAngle)
+            if (a < stats.targetMaxAngle)
             {
                 float dds = d.sqrMagnitude;
                 if (dds < minDist)
@@ -74,10 +79,6 @@ public class SlugController : MonoBehaviour
 
         }
 
-        if (nextTarget != null)
-        {
-            shouldAttack = true;
-        }
     }
 
     public void OnExitTransitionAnimationFinished()
@@ -89,7 +90,9 @@ public class SlugController : MonoBehaviour
     {
         Gizmos.color = Color.yellow;
         // Gizmos.DrawWireSphere(transform.position, targetSearchRadius);
-        Gizmos.DrawFrustum(transform.position, targetMaxAngle, targetSearchRadius, 0, 1f);
+        Gizmos.matrix = transform.localToWorldMatrix;
+        Gizmos.DrawFrustum(Vector3.zero, stats.targetMaxAngle, stats.targetSearchRadius, 0, 1f);
+        // Gizmos.DrawFrustum(transform.position, 0f, stats.targetSearchRadius, 0, 1f);
     }
 
     // Update is called once per frame

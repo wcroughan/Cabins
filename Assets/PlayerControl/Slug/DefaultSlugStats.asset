@@ -9,8 +9,8 @@ MonoBehaviour:
   m_GameObject: {fileID: 0}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 29b687095623eff7ab74419b862d3b05, type: 3}
-  m_Name: DefaultSlugMotorStats
+  m_Script: {fileID: 11500000, guid: 83ef6c37aeae4eff299a978553a941be, type: 3}
+  m_Name: DefaultSlugStats
   m_EditorClassIdentifier: 
-  turnSpeed: 100
-  moveSpeed: 3
+  targetSearchRadius: 42
+  targetMaxAngle: 59.5

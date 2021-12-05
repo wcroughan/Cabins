@@ -17,34 +17,38 @@ public class SlugMotor : MonoBehaviour
     private int idleAnimationIndexID;
 
     public enum SlugAction { TurnLeft, TurnRight, MoveForward, MoveBackward, Lunge };
-    private SlugAction? nextAction;
+    [SerializeField]
+    private SlugAction nextAction;
+    [SerializeField]
+    private bool hasNextAction;
     private bool waitingOnPreviousActionAnimation;
 
     [SerializeField]
     private float timeToReachTarget = 1f;
     [SerializeField]
-    private float destroyThreshold = 1;
+    private float timeToRotateToTarget = 1f;
     [SerializeField]
     private float lungeTargetOffset = 1;
     private Vector3 smoothDampVelocity = Vector3.zero;
     private bool isLunging = false;
+    [SerializeField]
     private GameObject lungeTarget;
     private float timeIntoLunge = 0;
     private Vector3 lungeEndPosition;
     private Vector3 lungeStartPosition;
+    private Quaternion lungeEndRotation;
+    private Quaternion lungeStartRotation;
 
     private Animator animator;
     private Rigidbody rb;
     private CapsuleCollider capsuleCollider;
     private Dictionary<SlugAction?, int> animatorTriggerKeys;
 
-    void Start()
-    {
-        animator = GetComponent<Animator>();
-        rb = GetComponent<Rigidbody>();
-        capsuleCollider = GetComponent<CapsuleCollider>();
+    public event System.Action controllerCallback;
 
-        nextAction = null;
+    void Awake()
+    {
+        hasNextAction = false;
         waitingOnPreviousActionAnimation = false;
         animatorTriggerKeys = new Dictionary<SlugAction?, int>();
         animatorTriggerKeys[SlugAction.TurnLeft] = Animator.StringToHash("TurnLeftTrigger");
@@ -56,6 +60,14 @@ public class SlugMotor : MonoBehaviour
         idleAnimationTriggerID = Animator.StringToHash("IdleAnimationTrigger");
         idleAnimationIndexID = Animator.StringToHash("IdleAnimationIndex");
         idleAnimationProbability = 1f / idleAnimationFrequency;
+
+        animator = GetComponent<Animator>();
+        rb = GetComponent<Rigidbody>();
+        capsuleCollider = GetComponent<CapsuleCollider>();
+    }
+
+    void Start()
+    {
     }
 
     public void SetNextLungeTarget(GameObject target)
@@ -67,7 +79,11 @@ public class SlugMotor : MonoBehaviour
     public void PerformAction(SlugAction action)
     {
         if (!waitingOnPreviousActionAnimation)
+        {
+            // Debug.Log($"{name} got action {action}", this.gameObject);
             nextAction = action;
+            hasNextAction = true;
+        }
     }
 
     void Update()
@@ -82,11 +98,15 @@ public class SlugMotor : MonoBehaviour
     public void OnWalkAnimationFinished()
     {
         waitingOnPreviousActionAnimation = false;
+        if (controllerCallback != null)
+            controllerCallback();
     }
 
     public void OnTurnAnimationFinished()
     {
         waitingOnPreviousActionAnimation = false;
+        if (controllerCallback != null)
+            controllerCallback();
     }
 
     public void OnLungeAnimationFinished()
@@ -94,23 +114,26 @@ public class SlugMotor : MonoBehaviour
         waitingOnPreviousActionAnimation = false;
         rb.isKinematic = false;
         capsuleCollider.enabled = true;
+        if (controllerCallback != null)
+            controllerCallback();
     }
 
     void FixedUpdate()
     {
-        timeIntoLunge += Time.deltaTime;
         if (isLunging)
         {
+            timeIntoLunge += Time.deltaTime;
             float lval = Mathf.InverseLerp(0, timeToReachTarget, timeIntoLunge);
+            float lvalRotation = Mathf.InverseLerp(0, timeToRotateToTarget, timeIntoLunge);
             if (lval >= 1)
             {
                 isLunging = false;
                 rb.MovePosition(lungeEndPosition);
-                Destroy(lungeTarget);
             }
             else
             {
                 rb.MovePosition(Vector3.Lerp(lungeStartPosition, lungeEndPosition, lval));
+                rb.MoveRotation(Quaternion.Slerp(lungeStartRotation, lungeEndRotation, lvalRotation));
             }
         }
 
@@ -119,9 +142,8 @@ public class SlugMotor : MonoBehaviour
             return;
         }
 
-        if (nextAction != null)
+        if (hasNextAction)
         {
-            Debug.Log($"Slug doing {nextAction}");
             //if we're just moving, root node movement will take care of that
             animator.SetTrigger(animatorTriggerKeys[nextAction]);
 
@@ -135,10 +157,14 @@ public class SlugMotor : MonoBehaviour
                 Vector3 vecToTarget = (targetPosition - lungeStartPosition).normalized;
                 lungeEndPosition = targetPosition - vecToTarget * lungeTargetOffset;
 
+                lungeStartRotation = transform.rotation;
+                lungeEndRotation = Quaternion.LookRotation(vecToTarget);
+
                 timeIntoLunge = 0;
+                Destroy(lungeTarget, timeToReachTarget);
             }
 
-            nextAction = null;
+            hasNextAction = false;
             waitingOnPreviousActionAnimation = true;
         }
     }

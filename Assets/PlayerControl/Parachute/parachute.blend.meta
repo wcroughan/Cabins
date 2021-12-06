@@ -1,26 +1,8 @@
 fileFormatVersion: 2
-guid: d332795b35ae59fe689a07f6993f09cb
+guid: 3e05a08e51cc07ce78e09e71f01e5d1c
 ModelImporter:
   serializedVersion: 20200
-  internalIDToNameTable:
-  - first:
-      74: -623603649343465320
-    second: Scene
-  - first:
-      74: 4781951162920444690
-    second: Armature|ArmatureAction
-  - first:
-      74: 1591312707883138571
-    second: Armature|ArmsIn
-  - first:
-      74: -8945691123924629249
-    second: Armature|Idle
-  - first:
-      74: -8359226993953521689
-    second: Armature|NoPose
-  - first:
-      74: 3031411921458128146
-    second: Armature|Roll
+  internalIDToNameTable: []
   externalObjects: {}
   materials:
     materialImportMode: 2

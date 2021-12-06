@@ -28,7 +28,7 @@ public class SlugController : MonoBehaviour
         if (inputActions == null)
         {
             inputActions = new InputActions();
-            inputActions.WorldMovement.Attack.performed += ctx => OnAttackPerformed();
+            inputActions.WorldMovement.Attack.started += ctx => OnAttackPerformed();
             inputActions.WorldMovement.Move.performed += ctx => userMovementInput = ctx.ReadValue<Vector2>();
         }
 

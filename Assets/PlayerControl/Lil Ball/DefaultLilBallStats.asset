@@ -17,3 +17,7 @@ MonoBehaviour:
   maxJumpAngle: 2.36
   maxJumpDistFromGround: 0.05
   timeBeforeGroundMeasure: 0.26
+  cameraRotateSpeed: 1.04
+  minVertAngle: 14.7
+  maxVertAngle: 40.25
+  preferredCameraFollowDistance: 11.81

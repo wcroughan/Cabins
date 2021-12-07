@@ -9,24 +9,17 @@ public class CameraManager : MonoBehaviour
     [SerializeField]
     Transform cameraEndpoint;
     [SerializeField]
-    float cameraFollowSpeed = 1f;
-    [SerializeField]
-    float cameraRotateSpeed = 1f;
-    [SerializeField]
-    float minVertAngle = -35f, maxVertAngle = 35f;
-    [SerializeField]
-    public float defaultCameraFollowDistance = 4.25f;
+    public float cameraFollowSpeed = 1f;
     [SerializeField]
     LayerMask collisionLayers;
 
     [SerializeField]
     Transform player;
-    InputActions inputActions;
 
     private Vector3 cameraFollowVelocity = Vector3.zero;
-    private float lookHorizontalAngle = 0f;
-    private float lookVerticalAngle = 0f;
-    private Vector2 lookInput;
+
+    [SerializeField]
+    CameraFollowInfo cameraFollowInfo;
 
     float camCollisionRadius = 0.2f;
     float camCollisionOffset = 0.2f;
@@ -42,18 +35,10 @@ public class CameraManager : MonoBehaviour
     void OnEnable()
     {
 
-        if (inputActions == null)
-        {
-            inputActions = new InputActions();
-            inputActions.WorldMovement.Look.performed += ctx => lookInput = ctx.ReadValue<Vector2>();
-        }
-
-        inputActions.WorldMovement.Look.Enable();
     }
 
     void OnDisable()
     {
-        inputActions.WorldMovement.Look.Disable();
     }
 
     void LateUpdate()
@@ -62,20 +47,18 @@ public class CameraManager : MonoBehaviour
         Vector3 targetPosition = Vector3.SmoothDamp(transform.position, player.position, ref cameraFollowVelocity, cameraFollowSpeed);
         transform.position = targetPosition;
 
-        //camera pivot object rotates around player according to mouse
-        lookHorizontalAngle += lookInput.x * cameraRotateSpeed;
-        lookVerticalAngle -= lookInput.y * cameraRotateSpeed;
-        lookVerticalAngle = Mathf.Clamp(lookVerticalAngle, minVertAngle, maxVertAngle);
-
-        Quaternion targetRotation = Quaternion.Euler(lookVerticalAngle, lookHorizontalAngle, 0f);
+        Quaternion targetRotation = Quaternion.Euler(cameraFollowInfo.lookVerticalAngle, cameraFollowInfo.lookHorizontalAngle, 0f);
         cameraPivot.localRotation = targetRotation;
+        Vector3 targetPivotLocation = cameraPivot.localPosition;
+        targetPivotLocation.y = cameraFollowInfo.preferredCameraPivotHeight;
+        cameraPivot.localPosition = targetPivotLocation;
 
         //camera endpoint (which is where camera itself is, circling around the pivot) gets closer if there's anything between the player and its prefered position
         RaycastHit hit;
         Vector3 direction = (cameraEndpoint.position - cameraPivot.position).normalized;
 
-        float targetFollowDistance = -defaultCameraFollowDistance;
-        if (Physics.SphereCast(cameraPivot.position, camCollisionRadius, direction, out hit, defaultCameraFollowDistance, collisionLayers))
+        float targetFollowDistance = -cameraFollowInfo.preferredCameraFollowDistance;
+        if (Physics.SphereCast(cameraPivot.position, camCollisionRadius, direction, out hit, cameraFollowInfo.preferredCameraFollowDistance, collisionLayers))
         {
             //something is in between the person and the camera's preferred location
             float distance = Vector3.Distance(cameraPivot.position, hit.point);

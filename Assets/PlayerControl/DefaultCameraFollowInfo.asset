@@ -9,10 +9,10 @@ MonoBehaviour:
   m_GameObject: {fileID: 0}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 83ef6c37aeae4eff299a978553a941be, type: 3}
-  m_Name: DefaultSlugStats
+  m_Script: {fileID: 11500000, guid: e7cf765b62f5e6d3eb59338842f9e8de, type: 3}
+  m_Name: DefaultCameraFollowInfo
   m_EditorClassIdentifier: 
-  targetSearchRadius: 42
-  targetMaxAngle: 59.5
-  preferredCameraFollowDistance: 10.88
-  cameraVerticalAngle: 17.5
+  lookHorizontalAngle: 0.000090552196
+  lookVerticalAngle: 9.68
+  preferredCameraFollowDistance: 24.3
+  preferredCameraPivotHeight: 7.16

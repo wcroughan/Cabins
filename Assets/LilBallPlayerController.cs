@@ -6,11 +6,14 @@ public class LilBallPlayerController : MonoBehaviour
 {
     [SerializeField]
     LilBallStats stats;
+    [SerializeField]
+    CameraFollowInfo cameraFollowInfo;
 
     private Rigidbody rb;
     private Animator animator;
     private InputActions inputActions;
     private Vector2 userMovementInput;
+    private Vector2 lookInput;
     private bool shouldJump;
     private bool isJumping;
     private bool isLanding;
@@ -39,19 +42,26 @@ public class LilBallPlayerController : MonoBehaviour
             inputActions = new InputActions();
             inputActions.WorldMovement.Move.performed += ctx => userMovementInput = ctx.ReadValue<Vector2>();
             inputActions.WorldMovement.Jump.performed += ctx => shouldJump = ctx.ReadValueAsButton();
+            inputActions.WorldMovement.Look.performed += ctx => lookInput = ctx.ReadValue<Vector2>();
         }
 
         inputActions.WorldMovement.Move.Enable();
         inputActions.WorldMovement.Jump.Enable();
+        inputActions.WorldMovement.Look.Enable();
         shouldJump = false;
         isJumping = false;
         isLanding = false;
+        lookInput = Vector2.zero;
+        userMovementInput = Vector2.zero;
+
+        cameraFollowInfo.preferredCameraFollowDistance = stats.preferredCameraFollowDistance;
     }
 
     void OnDisable()
     {
         inputActions.WorldMovement.Move.Disable();
         inputActions.WorldMovement.Jump.Disable();
+        inputActions.WorldMovement.Look.Disable();
     }
 
     void OnJumpAnimationJumpPointReached()
@@ -66,10 +76,21 @@ public class LilBallPlayerController : MonoBehaviour
         isLanding = false;
     }
 
+    void Update()
+    {
+        cameraFollowInfo.lookHorizontalAngle += lookInput.x * stats.cameraRotateSpeed;
+        cameraFollowInfo.lookVerticalAngle -= lookInput.y * stats.cameraRotateSpeed;
+        cameraFollowInfo.lookVerticalAngle = Mathf.Clamp(cameraFollowInfo.lookVerticalAngle, stats.minVertAngle, stats.maxVertAngle);
+    }
+
     void FixedUpdate()
     {
-        Vector2 moveDir = userMovementInput.normalized;
-        Vector3 worldMoveDir = new Vector3(moveDir.x, 0f, moveDir.y);
+        float horizAngleRads = -(cameraFollowInfo.lookHorizontalAngle - 90) / 180 * Mathf.PI;
+        Vector3 lookDir = new Vector3(Mathf.Cos(horizAngleRads), 0f, Mathf.Sin(horizAngleRads));
+        Vector3 lookRightDir = new Vector3(Mathf.Sin(horizAngleRads), 0f, -Mathf.Cos(horizAngleRads));
+        Vector3 worldMoveDir = userMovementInput.x * lookRightDir + userMovementInput.y * lookDir;
+        // Vector2 moveDir = userMovementInput.normalized;
+        // Vector3 worldMoveDir = new Vector3(moveDir.x, 0f, moveDir.y);
         rb.AddForce(worldMoveDir * stats.speed, ForceMode.VelocityChange);
 
         if (shouldJump)

@@ -10,8 +10,10 @@ public class SlugController : MonoBehaviour
 
     [SerializeField]
     SlugStats stats;
-    private GameObject nextTarget;
+    [SerializeField]
+    CameraFollowInfo cameraFollowInfo;
 
+    private GameObject nextTarget;
     private SlugMotor motor;
     private InputActions inputActions;
     private Vector2 userMovementInput;
@@ -35,6 +37,9 @@ public class SlugController : MonoBehaviour
         inputActions.WorldMovement.Attack.Enable();
         inputActions.WorldMovement.Move.Enable();
         shouldAttack = false;
+        cameraFollowInfo.preferredCameraFollowDistance = stats.preferredCameraFollowDistance;
+        cameraFollowInfo.lookVerticalAngle = stats.cameraVerticalAngle;
+        AlignCamera();
     }
 
     void OnDisable()
@@ -95,9 +100,15 @@ public class SlugController : MonoBehaviour
         // Gizmos.DrawFrustum(transform.position, 0f, stats.targetSearchRadius, 0, 1f);
     }
 
+    void AlignCamera()
+    {
+        cameraFollowInfo.lookHorizontalAngle = transform.rotation.eulerAngles.y;
+    }
+
     // Update is called once per frame
     void Update()
     {
+        AlignCamera();
 
         if (shouldAttack)
         {

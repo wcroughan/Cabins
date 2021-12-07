@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using UnityEngine;
 
 //handles the physics and animation associated with performing actions as a slug
-[RequireComponent(typeof(Rigidbody), typeof(Animator))]
+[RequireComponent(typeof(Rigidbody), typeof(Animator), typeof(CapsuleCollider))]
 public class SlugMotor : MonoBehaviour
 {
     [SerializeField]
@@ -17,9 +17,7 @@ public class SlugMotor : MonoBehaviour
     private int idleAnimationIndexID;
 
     public enum SlugAction { TurnLeft, TurnRight, MoveForward, MoveBackward, Lunge };
-    [SerializeField]
     private SlugAction nextAction;
-    [SerializeField]
     private bool hasNextAction;
     private bool waitingOnPreviousActionAnimation;
 

@@ -10,4 +10,9 @@ public class LilBallStats : ScriptableObject
     public float maxJumpAngle;
     public float maxJumpDistFromGround;
     public float timeBeforeGroundMeasure;
+
+    public float cameraRotateSpeed;
+    public float minVertAngle;
+    public float maxVertAngle;
+    public float preferredCameraFollowDistance;
 }

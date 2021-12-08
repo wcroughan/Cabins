@@ -36,6 +36,15 @@ ModelImporter:
   - first:
       74: 8322557244915790249
     second: Armature|Rotate
+  - first:
+      74: -9125523489441110064
+    second: Armature|Action.001
+  - first:
+      74: 8750769504902581090
+    second: Armature|Roll.001
+  - first:
+      74: -8685243652107275262
+    second: Armature|Rotate.Right
   externalObjects: {}
   materials:
     materialImportMode: 2

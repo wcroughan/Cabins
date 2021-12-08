@@ -71,6 +71,7 @@ public class CraneMotor : MonoBehaviour
     public void OnIdleAnimationStateEntered()
     {
         waitingOnPreviousActionAnimation = false;
+        rb.velocity = Vector3.zero;
         if (isAttacking)
         {
             isAttacking = false;

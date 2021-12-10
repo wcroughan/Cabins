@@ -9,8 +9,6 @@ public class CameraManager : MonoBehaviour
     [SerializeField]
     Transform cameraEndpoint;
     [SerializeField]
-    public float cameraFollowSpeed = 1f;
-    [SerializeField]
     LayerMask collisionLayers;
 
     [SerializeField]
@@ -44,7 +42,7 @@ public class CameraManager : MonoBehaviour
     void LateUpdate()
     {
         //main camera object follows position of player
-        Vector3 targetPosition = Vector3.SmoothDamp(transform.position, player.position, ref cameraFollowVelocity, cameraFollowSpeed);
+        Vector3 targetPosition = Vector3.SmoothDamp(transform.position, player.position, ref cameraFollowVelocity, cameraFollowInfo.cameraFollowSpeed);
         transform.position = targetPosition;
 
         Quaternion targetRotation = Quaternion.Euler(cameraFollowInfo.lookVerticalAngle, cameraFollowInfo.lookHorizontalAngle, 0f);

@@ -13,6 +13,7 @@ MonoBehaviour:
   m_Name: DefaultCameraFollowInfo
   m_EditorClassIdentifier: 
   lookHorizontalAngle: 0.000090552196
-  lookVerticalAngle: 9.68
-  preferredCameraFollowDistance: 24.3
-  preferredCameraPivotHeight: 7.16
+  lookVerticalAngle: 0.22
+  preferredCameraFollowDistance: 3.95
+  preferredCameraPivotHeight: 0.51
+  cameraFollowSpeed: 0.01

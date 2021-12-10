@@ -12,8 +12,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: c8a189b9d606182389f56e4dae4c6672, type: 3}
   m_Name: Default Parachute Stats
   m_EditorClassIdentifier: 
-  jumpForce: 3
-  jumpLandDistance: 0.52
+  jumpForce: 2000
+  jumpLandDistance: 1.2
   spikeDrag: 0.52
   glideDrag: 3.61
   movementSpeed: 0.54

@@ -30,7 +30,7 @@ public class ParachuteMotor : MonoBehaviour
     private int jumpTrigger;
     private int hitAThingBool;
     private RaycastHit[] raycastResults;
-    private int numRayCastResults = 3;
+    private int numRayCastResults = 4;
 
     private Quaternion targetRotation;
     private Vector2 movementVector;
@@ -75,7 +75,7 @@ public class ParachuteMotor : MonoBehaviour
             shouldJump = false;
             rb.AddForce(stats.jumpForce * Vector3.up, ForceMode.Force);
             isJumping = true;
-            // animator.SetTrigger(jumpTrigger);
+            animator.SetTrigger(jumpTrigger);
         }
         else if (isJumping)
         {
@@ -84,28 +84,28 @@ public class ParachuteMotor : MonoBehaviour
             int numHit = Physics.SphereCastNonAlloc(transform.position, capsuleCollider.radius, Vector3.down, raycastResults, stats.jumpLandDistance);
             if (numHit > 0)
             {
-                Debug.Log("hit a thing");
                 //landed or hit something
                 for (int i = 0; i < numHit; i++)
                 {
+                    Debug.Log($"hit a thing: {raycastResults[i].transform.gameObject.name}");
                     RaycastHit hit = raycastResults[i];
-                    if (hit.collider.gameObject.layer == LayerMask.NameToLayer("Terrain"))
+                    if (hit.collider.gameObject.layer == LayerMask.NameToLayer("Terrain") && rb.velocity.y < 0)
                     {
-                        // animator.SetTrigger(landTrigger);
+                        animator.SetTrigger(landTrigger);
                         isJumping = false;
                         isGliding = false;
-                        // animator.SetBool(hitAThingBool, hitAThing);
+                        animator.SetBool(hitAThingBool, hitAThing);
                         glideModeEnabled = true;
                         transform.rotation = Quaternion.identity;
                     }
-                    else
+                    else if (hit.collider.gameObject != gameObject)
                     {
                         //hit a thing
                         if (!isGliding)
                         {
                             if (isJumping) // have to check this in case also hit the ground
                                 glideModeEnabled = false;
-                            hit.transform.SetParent(transform);
+                            // hit.transform.SetParent(transform);
                             hitAThing = true;
                         }
                     }
@@ -119,14 +119,14 @@ public class ParachuteMotor : MonoBehaviour
                 {
                     shouldSpike = false;
                     isGliding = false;
-                    // animator.SetTrigger(spikeTrigger);
+                    animator.SetTrigger(spikeTrigger);
                     // rb.drag = stats.spikeDrag;
                 }
                 else if (!isGliding && shouldGlide && glideModeEnabled)
                 {
                     shouldGlide = false;
                     isGliding = true;
-                    // animator.SetTrigger(glideTrigger);
+                    animator.SetTrigger(glideTrigger);
                     // rb.drag = stats.glideDrag;
                 }
             }

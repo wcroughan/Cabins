@@ -9,4 +9,5 @@ public class CameraFollowInfo : ScriptableObject
     public float lookVerticalAngle;
     public float preferredCameraFollowDistance;
     public float preferredCameraPivotHeight;
+    public float cameraFollowSpeed;
 }
